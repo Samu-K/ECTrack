@@ -24,3 +24,7 @@ Still a work-in-progress.
 
 Main pipeline is that each merge request gets checked with checkstyle, if that passes the code gets built and tested. 
 If everything is green, the merge is accepted.
+
+### Testing
+If you know how to and have the time, it's good to write tests for each piece on functionality we make.
+Regular unit tests are fine, but if you have experience in testing feel free to make more complicated tests.
