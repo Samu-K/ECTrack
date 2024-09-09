@@ -5,6 +5,11 @@ ECTrack is a desktop app that allows you to see trends in electricity usage and 
 
 ## Instructions for development
 
+### What is being used
+We are using java version 22. CI / CD used openjdk, so it's recommended to use the same.
+Project management is done using Maven.
+Graphics are done with JavaFX
+
 ### Style
 Developers should use checkstyle, with the [google_checks.xml](https://google.github.io/styleguide/javaguide.html) configuration, so that all code is uniform.
 
