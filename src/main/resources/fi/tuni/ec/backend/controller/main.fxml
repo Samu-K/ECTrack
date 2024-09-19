@@ -9,15 +9,11 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.geometry.Insets?>
 
-<BorderPane style="-fx-background-color: #3B383E;" xmlns="http:/>/javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" id="root" fx:controller="fi.tuni.ec.backend.controller.MainController" >
-
+<?import javafx.scene.image.Image?>
+<BorderPane style="-fx-background-color: #3B383E;" xmlns="http:/>/javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" id="root" >
     <center>
-        <HBox>
-            <VBox>
-                <HBox fx:id="headerBox">
-                    <Label text="EC Track"/>
-                </HBox>
-            </VBox>
-        </HBox>
+        <VBox alignment="CENTER">
+            <Label text="ECTRACK 2" style="-fx-text-fill: white; -fx-font-size: 24px;"/>
+        </VBox>
     </center>
 </BorderPane>

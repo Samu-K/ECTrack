@@ -1,13 +1,11 @@
 package fi.tuni.ec.backend.controller;
 
+import java.io.IOException;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
-
-import java.io.IOException;
 
 /**
  * Controller for main view.
@@ -43,9 +41,10 @@ public class MainController {
       primaryStage.getScene().getWindow().setWidth(1000);
       primaryStage.getScene().getWindow().setHeight(650);
 
-      FXMLLoader loader =
-          new FXMLLoader(getClass().getResource("/fi/tuni/ec/front/MainPage.fxml"));
-      Pane mainPage = loader.load();
+      FXMLLoader loader = new FXMLLoader();
+      loader.setLocation(MainController.class.getResource("main.fxml"));
+      BorderPane mainPage = loader.load();
+      primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("logo.png")));
       rootLayout.setCenter(mainPage);
     } catch (IOException e) {
       e.printStackTrace();
