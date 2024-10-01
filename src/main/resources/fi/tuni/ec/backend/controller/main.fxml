@@ -10,7 +10,8 @@
 
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<BorderPane xmlns:fx="http://javafx.com/fxml" prefWidth="1080" prefHeight="720" style="-fx-background-color: #2E2C3D;">
+<?import javafx.scene.layout.Region?>
+<BorderPane xmlns:fx="http://javafx.com/fxml" prefWidth="1080" prefHeight="720" style="-fx-background-color: #2E2C3D;" >
 
     <!-- Top Bar -->
     <top>
@@ -30,8 +31,9 @@
             <ComboBox prefWidth="120" />
             <Label text="Country" style="-fx-text-fill: black;" />
             <ComboBox prefWidth="120" />
-            <Button text="SAVE SEARCH" prefWidth="120" alignment="BOTTOM_CENTER"/>
-            <Button text="LOAD SEARCH" prefWidth="120" alignment="BOTTOM_CENTER"/>
+            <Region VBox.vgrow="ALWAYS" />
+            <Button text="SAVE SEARCH" prefWidth="120" />
+            <Button text="LOAD SEARCH" prefWidth="120" />
         </VBox>
     </left>
 
@@ -49,7 +51,11 @@
 
             <!-- Date Display -->
             <HBox alignment="CENTER">
+                <Button text="prev"/>
+                <Region HBox.hgrow="ALWAYS" />
                 <Label text="Wed. 18.09.2024" style="-fx-text-fill: white; -fx-font-size: 18;-fx-padding: 0 0 0 0;-fx-text-alignment: CENTER"/>
+                <Region HBox.hgrow="ALWAYS" />
+                <Button text="next"/>
             </HBox>
 
             <!-- Graph Area (Placeholder) -->
