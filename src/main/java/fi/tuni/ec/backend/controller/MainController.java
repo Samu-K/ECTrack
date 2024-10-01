@@ -42,7 +42,7 @@ public class MainController {
       primaryStage.getScene().getWindow().setHeight(650);
 
       FXMLLoader loader = new FXMLLoader();
-      loader.setLocation(MainController.class.getResource("main.fxml"));
+      loader.setLocation(MainController.class.getResource("landing.fxml"));
       BorderPane mainPage = loader.load();
       primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("logo.png")));
       rootLayout.setCenter(mainPage);
