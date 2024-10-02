@@ -12,6 +12,7 @@ import javafx.scene.control.Label;
 
 /**
  * Controller for landing page.
+ * Populates filter comboboxes, handles landing page navigation elements.
  */
 public class LandingController {
   private LocalDate date;
@@ -32,7 +33,7 @@ public class LandingController {
       "Finland", "Sweden", "Norway", "Denmark", "Iceland", "Estonia", "Latvia", "Lithuania"
   );
 
-
+  // describes what time period is currently selected
   private enum DateState {
     DAY, WEEK, MONTH, YEAR, YTD
   }
@@ -46,7 +47,7 @@ public class LandingController {
   @FXML ComboBox<String> countryCb;
 
   /**
-   * Initializes the controller class.
+   * Initializes the controller. Sets date to current date and populates comboboxes.
    */
   @FXML
   public void initialize() {
@@ -144,16 +145,30 @@ public class LandingController {
     };
   }
 
+  /**
+   * Create a string with the start and end date of the week.
+   *
+   * @param date The date to calculate the week from
+   * @return String in format dd.MM.yyyy - dd.MM.yyyy
+   */
   private String getWeekString(LocalDate date) {
+    List<LocalDate> week = getWeek(date);
     try {
-      return getWeek(date).get(0).format(dateFormatter) + " - "
-          + getWeek(date).get(1).format(dateFormatter);
+      return week.get(0).format(dateFormatter) + " - "
+          + week.get(1).format(dateFormatter);
     } catch (NullPointerException e) {
       System.out.println("Error: Date null");
       return null;
     }
   }
 
+  /**
+   * Returns a list containing the start of the year and given date.
+   *
+   * @param date The date to calculate the year from
+   *
+   * @return List containing the start of the year and given date
+   */
   private List<LocalDate> getYtd(LocalDate date) {
     String startDate = "01.01." + date.getYear();
     LocalDate start = LocalDate.parse(startDate, dateFormatter);
@@ -161,9 +176,15 @@ public class LandingController {
 
   }
 
+  /**
+   * Creates a string with the start of the year and current date.
+   *
+   * @return String with format dd.MM.yyyy - dd.MM.yyyy
+   */
   private String getYtdString() {
-    return getYtd(curDate).get(0).format(dateFormatter) + " - "
-        + getYtd(curDate).get(1).format(dateFormatter);
+    List<LocalDate> ytd = getYtd(curDate);
+    return ytd.get(0).format(dateFormatter) + " - "
+        + ytd.get(1).format(dateFormatter);
   }
 
   @FXML
