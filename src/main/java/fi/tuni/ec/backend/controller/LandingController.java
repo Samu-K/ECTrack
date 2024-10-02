@@ -67,39 +67,50 @@ public class LandingController {
    * @param offSet Determines if date moves forward or backward
    */
   private void setDate(int offSet) {
+    LocalDate newDate;
     switch (ds) {
       case DAY:
-        date = date.plusDays(offSet);
-        if (date.isAfter(curDate)) {
+        newDate = date.plusDays(offSet);
+        if (newDate.isAfter(curDate)) {
           invalidDateAlert.showAndWait();
+        } else {
+          date = newDate;
         }
         showDate();
         break;
       case WEEK:
-        date = date.plusWeeks(offSet);
-        if (date.isAfter(curDate)) {
+        newDate = date.plusWeeks(offSet);
+        if (newDate.isAfter(curDate)) {
           invalidDateAlert.showAndWait();
+        } else {
+          date = newDate;
         }
         showWeek();
         break;
       case MONTH:
-        date = date.plusMonths(offSet);
-        if (date.isAfter(curDate)) {
+        newDate = date.plusMonths(offSet);
+        if (newDate.isAfter(curDate)) {
           invalidDateAlert.showAndWait();
+        } else {
+          date = newDate;
         }
         showMonth();
         break;
       case YEAR:
-        date = date.plusYears(offSet);
-        if (date.isAfter(curDate)) {
+        newDate = date.plusYears(offSet);
+        if (newDate.isAfter(curDate)) {
           invalidDateAlert.showAndWait();
+        } else {
+          date = newDate;
         }
         showYear();
         break;
       case YTD:
-        date = date.plusYears(offSet);
-        if (date.isAfter(curDate)) {
+        newDate = date.plusYears(offSet);
+        if (newDate.isAfter(curDate)) {
           invalidDateAlert.showAndWait();
+        } else {
+          date = newDate;
         }
         showYtd();
         break;
