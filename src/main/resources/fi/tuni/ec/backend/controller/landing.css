@@ -1,0 +1,12 @@
+.date-filter-button {
+    -fx-background-color: grey;
+    -fx-font-size: 18px;
+}
+
+.date-filter-button:focused {
+    -fx-background-color: lightgrey;
+}
+
+.date-filter-button:hover {
+    -fx-background-color: lightgrey;
+}
