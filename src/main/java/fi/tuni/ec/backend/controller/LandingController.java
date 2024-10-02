@@ -1,9 +1,10 @@
 package fi.tuni.ec.backend.controller;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
 
@@ -11,7 +12,8 @@ import javafx.scene.control.Label;
  * Controller for landing page.
  */
 public class LandingController {
-  private LocalDateTime date;
+  private LocalDate date;
+  private LocalDate curDate;
   private DateState ds;
   private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
   private final DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM");
@@ -22,13 +24,16 @@ public class LandingController {
   }
 
   @FXML Label dateLabel;
+  @FXML Button prevDateButton;
+  @FXML Button nextDateButton;
 
   /**
    * Initializes the controller class.
    */
   @FXML
   public void initialize() {
-    date = LocalDateTime.now();
+    curDate = LocalDate.now();
+    date = curDate;
     dateLabel.setText(dateFormatter.format(date));
     ds = DateState.DAY;
   }
@@ -42,22 +47,37 @@ public class LandingController {
     switch (ds) {
       case DAY:
         date = date.plusDays(offSet);
+        if (date.isAfter(curDate)) {
+          throw new IllegalArgumentException("Date cannot be in the future");
+        }
         showDate();
         break;
       case WEEK:
         date = date.plusWeeks(offSet);
+        if (date.isAfter(curDate)) {
+          throw new IllegalArgumentException("Date cannot be in the future");
+        }
         showWeek();
         break;
       case MONTH:
         date = date.plusMonths(offSet);
+        if (date.isAfter(curDate)) {
+          throw new IllegalArgumentException("Date cannot be in the future");
+        }
         showMonth();
         break;
       case YEAR:
         date = date.plusYears(offSet);
+        if (date.isAfter(curDate)) {
+          throw new IllegalArgumentException("Date cannot be in the future");
+        }
         showYear();
         break;
       case YTD:
         date = date.plusYears(offSet);
+        if (date.isAfter(curDate)) {
+          throw new IllegalArgumentException("Date cannot be in the future");
+        }
         showYtd();
         break;
       default:
@@ -72,7 +92,7 @@ public class LandingController {
    *
    * @return List containing the start and end date of the week
    */
-  private List<LocalDateTime> getWeek(LocalDateTime date) {
+  private List<LocalDate> getWeek(LocalDate date) {
     // Gets the day of the week (in english)
     DateTimeFormatter weekDayFormatter = DateTimeFormatter.ofPattern("E");
     String weekDay = weekDayFormatter.format(date);
@@ -90,7 +110,7 @@ public class LandingController {
     };
   }
 
-  private String getWeekString(LocalDateTime date) {
+  private String getWeekString(LocalDate date) {
     try {
       return getWeek(date).get(0).format(dateFormatter) + " - "
           + getWeek(date).get(1).format(dateFormatter);
@@ -98,6 +118,18 @@ public class LandingController {
       System.out.println("Error: Date null");
       return null;
     }
+  }
+
+  private List<LocalDate> getYtd(LocalDate date) {
+    String startDate = "01.01." + date.getYear();
+    LocalDate start = LocalDate.parse(startDate, dateFormatter);
+    return List.of(start, date);
+
+  }
+
+  private String getYtdString() {
+    return getYtd(curDate).get(0).format(dateFormatter) + " - "
+        + getYtd(curDate).get(1).format(dateFormatter);
   }
 
   @FXML
@@ -110,34 +142,59 @@ public class LandingController {
     setDate(1);
   }
 
+  /**
+   * Sets date range to display as day.
+   */
   @FXML
   public void showDate() {
     dateLabel.setText(dateFormatter.format(date));
     ds = DateState.DAY;
+    nextDateButton.setVisible(true);
+    prevDateButton.setVisible(true);
   }
 
+  /**
+   * Sets date range to display as week.
+   */
   @FXML
   public void showWeek() {
     dateLabel.setText(getWeekString(date));
     ds = DateState.WEEK;
+    nextDateButton.setVisible(true);
+    prevDateButton.setVisible(true);
   }
 
+  /**
+   * Sets date range to display as month.
+   */
   @FXML
   public void showMonth() {
     dateLabel.setText(monthFormatter.format(date));
     ds = DateState.MONTH;
+    nextDateButton.setVisible(true);
+    prevDateButton.setVisible(true);
   }
 
+  /**
+   * Sets date range to display as year.
+   */
   @FXML
   public void showYear() {
     dateLabel.setText(yearFormatter.format(date));
     ds = DateState.YEAR;
+    nextDateButton.setVisible(true);
+    prevDateButton.setVisible(true);
   }
 
+  /**
+   * Sets date range to display as year to date.
+   */
   @FXML
   public void showYtd() {
-    dateLabel.setText("NOT IMPLEMENTED");
+    dateLabel.setText(getYtdString());
     ds = DateState.YTD;
+    nextDateButton.setVisible(false);
+    prevDateButton.setVisible(false);
   }
 
 }
