@@ -73,8 +73,11 @@ public class LandingController {
    * @return List containing the start and end date of the week
    */
   private List<LocalDateTime> getWeek(LocalDateTime date) {
+    // Gets the day of the week (in english)
     DateTimeFormatter weekDayFormatter = DateTimeFormatter.ofPattern("E");
     String weekDay = weekDayFormatter.format(date);
+    // This needs to be refactored to contain
+    // no magic numbers and hardcoded value
     return switch (weekDay) {
       case "Mon" -> List.of(date, date.plusDays(6));
       case "Tue" -> List.of(date.minusDays(1), date.plusDays(5));
@@ -88,8 +91,13 @@ public class LandingController {
   }
 
   private String getWeekString(LocalDateTime date) {
-    return getWeek(date).get(0).format(dateFormatter) + " - "
-        + getWeek(date).get(1).format(dateFormatter);
+    try {
+      return getWeek(date).get(0).format(dateFormatter) + " - "
+          + getWeek(date).get(1).format(dateFormatter);
+    } catch (NullPointerException e) {
+      System.out.println("Error: Date null");
+      return null;
+    }
   }
 
   @FXML
