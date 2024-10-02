@@ -11,7 +11,7 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.Region?>
-<BorderPane xmlns:fx="http://javafx.com/fxml" prefWidth="1080" prefHeight="720" style="-fx-background-color: #2E2C3D;" fx:controller="fi.tuni.ec.backend.controller.LandingController">
+<BorderPane xmlns:fx="http://javafx.com/fxml" prefWidth="1080" prefHeight="720" style="-fx-background-color: #2E2C3D;" fx:controller="fi.tuni.ec.backend.controller.LandingController" stylesheets="@landing.css">
 
     <!-- Top Bar -->
     <top>
@@ -42,11 +42,11 @@
         <VBox spacing="10" style="-fx-background-color: #4D4A59; -fx-padding: 20;">
             <!-- Tabs -->
             <HBox spacing="10" style="-fx-background-color: #4D4A59;" alignment="TOP_CENTER">
-                <Button text="Day" onAction="#showDate" style="-fx-background-color: lightgrey; -fx-font-size: 18px;" />
-                <Button text="Week" onAction="#showWeek" style="-fx-background-color: lightgrey; -fx-font-size: 18px;" />
-                <Button text="Month" onAction="#showMonth" style="-fx-background-color: lightgrey; -fx-font-size: 18px;" />
-                <Button text="Year" onAction="#showYear" style="-fx-background-color: lightgrey; -fx-font-size: 18px;" />
-                <Button text="YTD" onAction="#showYtd" style="-fx-background-color: lightgrey; -fx-font-size: 18px;" />
+                <Button styleClass="date-filter-button" text="Day" onAction="#showDate"  />
+                <Button styleClass="date-filter-button" text="Week" onAction="#showWeek"  />
+                <Button styleClass="date-filter-button" text="Month" onAction="#showMonth"  />
+                <Button styleClass="date-filter-button" text="Year" onAction="#showYear"  />
+                <Button styleClass="date-filter-button" text="YTD" onAction="#showYtd"  />
             </HBox>
 
             <!-- Date Display -->
