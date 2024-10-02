@@ -11,10 +11,14 @@ import javafx.scene.control.Label;
  */
 public class LandingController {
   private LocalDateTime date;
-  private int dateState;
-  private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-  private DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM");
-  private DateTimeFormatter yearFormatter = DateTimeFormatter.ofPattern("yyyy");
+  private DateState ds;
+  private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+  private final DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM");
+  private final DateTimeFormatter yearFormatter = DateTimeFormatter.ofPattern("yyyy");
+
+  private enum DateState {
+    DAY, WEEK, MONTH, YEAR, YTD
+  }
 
   @FXML Label dateLabel;
 
@@ -25,67 +29,79 @@ public class LandingController {
   public void initialize() {
     date = LocalDateTime.now();
     dateLabel.setText(dateFormatter.format(date));
-    dateState = 0;
+    ds = DateState.DAY;
   }
 
   /**
-   * Controls "next" button for date.
+   * Moves date based on current time period selected.
+   *
+   * @param offSet Determines if date moves forward or backward
    */
-  @FXML
-  public void setDateNext() {
-    if (dateState == 0) {
-      date = date.plusDays(1);
-      showDate();
-    } else if (dateState == 1) {
-      date = date.plusWeeks(1);
-      showWeek();
-    } else if (dateState == 2) {
-      date = date.plusMonths(1);
-      showMonth();
-    } else if (dateState == 3) {
-      date = date.plusYears(1);
-      showYear();
-    } else if (dateState == 4) {
-      date = date.plusYears(1);
-      showYtd();
+  private void setDate(int offSet) {
+    switch (ds) {
+      case DAY:
+        date = date.plusDays(offSet);
+        showDate();
+        break;
+      case WEEK:
+        date = date.plusWeeks(offSet);
+        showWeek();
+        break;
+      case MONTH:
+        date = date.plusMonths(offSet);
+        showMonth();
+        break;
+      case YEAR:
+        date = date.plusYears(offSet);
+        showYear();
+        break;
+      case YTD:
+        date = date.plusYears(offSet);
+        showYtd();
+        break;
+      default:
+        break;
     }
   }
 
   @FXML
   public void setDatePrev() {
-    date = date.minusDays(1);
-    dateLabel.setText(dateFormatter.format(date));
+    setDate(-1);
+  }
+
+  @FXML
+  public  void setDateNext() {
+    setDate(1);
   }
 
   @FXML
   public void showDate() {
     dateLabel.setText(dateFormatter.format(date));
-    dateState = 0;
+    ds = DateState.DAY;
   }
 
   @FXML
   public void showWeek() {
     dateLabel.setText("NOT IMPLEMENTED");
-    dateState = 1;
+    ds = DateState.WEEK;
   }
 
   @FXML
   public void showMonth() {
     dateLabel.setText(monthFormatter.format(date));
-    dateState = 2;
+    ds = DateState.MONTH;
   }
 
   @FXML
   public void showYear() {
     dateLabel.setText(yearFormatter.format(date));
-    dateState = 3;
+    ds = DateState.YEAR;
   }
-
 
   @FXML
   public void showYtd() {
     dateLabel.setText("NOT IMPLEMENTED");
-    dateState = 4;
+    ds = DateState.YTD;
   }
 
 }
