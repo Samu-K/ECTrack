@@ -29,9 +29,9 @@
         <VBox prefWidth="150" spacing="20" style="-fx-background-color: #C0C0C0; -fx-padding: 20;">
             <Label text="Filters" style="-fx-font-size: 18px; -fx-text-fill: black;" alignment="TOP_CENTER" />
             <Label text="Region" style="-fx-text-fill: black;" />
-            <ComboBox prefWidth="120" />
+            <ComboBox fx:id="regionCb" prefWidth="120" />
             <Label text="Country" style="-fx-text-fill: black;" />
-            <ComboBox prefWidth="120" />
+            <ComboBox fx:id="countryCb" prefWidth="120" />
             <Region VBox.vgrow="ALWAYS" />
             <Button text="SAVE SEARCH" prefWidth="120" />
             <Button text="LOAD SEARCH" prefWidth="120" />
@@ -44,10 +44,10 @@
             <!-- Tabs -->
             <HBox spacing="10" style="-fx-background-color: #4D4A59;" alignment="TOP_CENTER">
                 <Button text="Day" onAction="#showDate" style="-fx-background-color: lightgrey; -fx-font-size: 18px;" />
-                <Button text="Week" onAction="#showWeek" style="-fx-background-color: grey; -fx-font-size: 18px;" />
-                <Button text="Month" onAction="#showMonth" style="-fx-background-color: grey; -fx-font-size: 18px;" />
-                <Button text="Year" onAction="#showYear" style="-fx-background-color: grey; -fx-font-size: 18px;" />
-                <Button text="YTD" onAction="#showYtd" style="-fx-background-color: grey; -fx-font-size: 18px;" />
+                <Button text="Week" onAction="#showWeek" style="-fx-background-color: lightgrey; -fx-font-size: 18px;" />
+                <Button text="Month" onAction="#showMonth" style="-fx-background-color: lightgrey; -fx-font-size: 18px;" />
+                <Button text="Year" onAction="#showYear" style="-fx-background-color: lightgrey; -fx-font-size: 18px;" />
+                <Button text="YTD" onAction="#showYtd" style="-fx-background-color: lightgrey; -fx-font-size: 18px;" />
             </HBox>
 
             <!-- Date Display -->

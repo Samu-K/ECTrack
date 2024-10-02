@@ -5,8 +5,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-
 
 /**
  * Controller for landing page.
@@ -19,13 +19,24 @@ public class LandingController {
   private final DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM");
   private final DateTimeFormatter yearFormatter = DateTimeFormatter.ofPattern("yyyy");
 
+  private static final List<String> REGIONS = List.of(
+      "Europe", "Asia", "Africa", "Americas", "Oceania");
+  private static final List<String> ALL_COUNTRIES = List.of(
+      "Finland", "Sweden", "Norway", "Denmark", "Iceland", "Estonia", "Latvia", "Lithuania"
+  );
+
+
   private enum DateState {
     DAY, WEEK, MONTH, YEAR, YTD
   }
 
+
+  // FXML elements
   @FXML Label dateLabel;
   @FXML Button prevDateButton;
   @FXML Button nextDateButton;
+  @FXML ComboBox<String> regionCb;
+  @FXML ComboBox<String> countryCb;
 
   /**
    * Initializes the controller class.
@@ -36,6 +47,11 @@ public class LandingController {
     date = curDate;
     dateLabel.setText(dateFormatter.format(date));
     ds = DateState.DAY;
+
+    regionCb.getItems().addAll(REGIONS);
+    regionCb.getSelectionModel().selectFirst();
+    countryCb.getItems().addAll(ALL_COUNTRIES);
+    countryCb.getSelectionModel().selectFirst();
   }
 
   /**
