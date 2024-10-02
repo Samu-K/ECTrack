@@ -4,7 +4,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 
@@ -18,6 +20,11 @@ public class LandingController {
   private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
   private final DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM");
   private final DateTimeFormatter yearFormatter = DateTimeFormatter.ofPattern("yyyy");
+
+  private final Alert invalidDateAlert = new Alert(
+      Alert.AlertType.ERROR,
+      "Date cannot be in the future",
+      ButtonType.OK);
 
   private static final List<String> REGIONS = List.of(
       "Europe", "Asia", "Africa", "Americas", "Oceania");
@@ -64,35 +71,35 @@ public class LandingController {
       case DAY:
         date = date.plusDays(offSet);
         if (date.isAfter(curDate)) {
-          throw new IllegalArgumentException("Date cannot be in the future");
+          invalidDateAlert.showAndWait();
         }
         showDate();
         break;
       case WEEK:
         date = date.plusWeeks(offSet);
         if (date.isAfter(curDate)) {
-          throw new IllegalArgumentException("Date cannot be in the future");
+          invalidDateAlert.showAndWait();
         }
         showWeek();
         break;
       case MONTH:
         date = date.plusMonths(offSet);
         if (date.isAfter(curDate)) {
-          throw new IllegalArgumentException("Date cannot be in the future");
+          invalidDateAlert.showAndWait();
         }
         showMonth();
         break;
       case YEAR:
         date = date.plusYears(offSet);
         if (date.isAfter(curDate)) {
-          throw new IllegalArgumentException("Date cannot be in the future");
+          invalidDateAlert.showAndWait();
         }
         showYear();
         break;
       case YTD:
         date = date.plusYears(offSet);
         if (date.isAfter(curDate)) {
-          throw new IllegalArgumentException("Date cannot be in the future");
+          invalidDateAlert.showAndWait();
         }
         showYtd();
         break;
