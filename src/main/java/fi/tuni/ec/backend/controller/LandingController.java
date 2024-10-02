@@ -2,6 +2,7 @@ package fi.tuni.ec.backend.controller;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 
@@ -64,6 +65,33 @@ public class LandingController {
     }
   }
 
+  /**
+   * Returns a list containing the start and end date of the week.
+   *
+   * @param date The date to calculate the week from
+   *
+   * @return List containing the start and end date of the week
+   */
+  private List<LocalDateTime> getWeek(LocalDateTime date) {
+    DateTimeFormatter weekDayFormatter = DateTimeFormatter.ofPattern("E");
+    String weekDay = weekDayFormatter.format(date);
+    return switch (weekDay) {
+      case "Mon" -> List.of(date, date.plusDays(6));
+      case "Tue" -> List.of(date.minusDays(1), date.plusDays(5));
+      case "Wed" -> List.of(date.minusDays(2), date.plusDays(4));
+      case "Thu" -> List.of(date.minusDays(3), date.plusDays(3));
+      case "Fri" -> List.of(date.minusDays(4), date.plusDays(2));
+      case "Sat" -> List.of(date.minusDays(5), date.plusDays(1));
+      case "Sun" -> List.of(date.minusDays(6), date);
+      default -> null;
+    };
+  }
+
+  private String getWeekString(LocalDateTime date) {
+    return getWeek(date).get(0).format(dateFormatter) + " - "
+        + getWeek(date).get(1).format(dateFormatter);
+  }
+
   @FXML
   public void setDatePrev() {
     setDate(-1);
@@ -82,7 +110,7 @@ public class LandingController {
 
   @FXML
   public void showWeek() {
-    dateLabel.setText("NOT IMPLEMENTED");
+    dateLabel.setText(getWeekString(date));
     ds = DateState.WEEK;
   }
 
