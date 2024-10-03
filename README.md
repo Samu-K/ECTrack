@@ -3,6 +3,9 @@
 ## Functionality
 ECTrack is a desktop app that allows you to see trends in electricity usage and pricing.
 
+## How to run software
+Software runs on java 22 and is built using maven. In order to run the software simply clone the repository and run mvn package javafx:run
+
 ## Instructions for development
 
 ### What is being used
