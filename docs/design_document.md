@@ -18,7 +18,7 @@ ECTrack is designed using the Model-View-Controller (MVC) architecture, which se
 
 ### High-Level Diagram
 
-![High-level diagram of MVC architecture](images/proto_arch_diagram.png)
+![High-level diagram of MVC architecture](images/proto_arch_diagram.png) \
 The View sends user inputs to the Controller. The Controller processes the inputs and communicates with the Model. The Model retrieves or updates the data and notifies the View when changes occur.
 
 ## Design Patterns
