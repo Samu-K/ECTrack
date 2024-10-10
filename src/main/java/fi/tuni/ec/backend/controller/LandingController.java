@@ -1,7 +1,9 @@
 package fi.tuni.ec.backend.controller;
 
+import fi.tuni.ec.backend.QueryHandler;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -9,6 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextInputDialog;
 
 /**
  * Controller for landing page.
@@ -18,6 +21,8 @@ public class LandingController {
   private LocalDate date;
   private LocalDate curDate;
   private DateState ds;
+  private QueryHandler queryHandler;
+
   private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
   private final DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM");
   private final DateTimeFormatter yearFormatter = DateTimeFormatter.ofPattern("yyyy");
@@ -55,11 +60,53 @@ public class LandingController {
     date = curDate;
     dateLabel.setText(dateFormatter.format(date));
     ds = DateState.DAY;
+    queryHandler = new QueryHandler();
 
     regionCb.getItems().addAll(REGIONS);
     regionCb.getSelectionModel().selectFirst();
     countryCb.getItems().addAll(ALL_COUNTRIES);
     countryCb.getSelectionModel().selectFirst();
+  }
+
+  /**
+   * Gives popup to user to enter query name.
+   *
+   * @return Name of the query.
+   */
+  private String queryNamePopup() {
+    TextInputDialog dialog = new TextInputDialog();
+    dialog.setTitle("Save query");
+    dialog.setHeaderText("Save query");
+    dialog.setContentText("Enter query name:");
+    dialog.showAndWait();
+    return dialog.getEditor().getText();
+  }
+
+  /**
+   * Save current query to handler.
+   * Gives popup to user to enter query name.
+   *
+   */
+  public void saveQuery() {
+    String country = countryCb.getValue();
+    String region = regionCb.getValue();
+    String params = country + "," + region;
+    String name = queryNamePopup();
+    queryHandler.saveQuery(name, curDate.toString(), params);
+  }
+
+  /**
+   * Load query from handler.
+   * Gives popup to user to enter query name.
+   *
+   */
+  public void loadQuery() {
+    String name = queryNamePopup();
+    ArrayList<String> query = queryHandler.loadQuery(name);
+    String country = query.get(2).split(",")[0];
+    String region = query.get(2).split(",")[1];
+    countryCb.setValue(country);
+    regionCb.setValue(region);
   }
 
   /**

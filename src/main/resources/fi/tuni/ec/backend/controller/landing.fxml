@@ -32,8 +32,8 @@
             <Label text="Country" style="-fx-text-fill: black;" />
             <ComboBox fx:id="countryCb" prefWidth="120" />
             <Region VBox.vgrow="ALWAYS" />
-            <Button text="SAVE SEARCH" prefWidth="120" />
-            <Button text="LOAD SEARCH" prefWidth="120" />
+            <Button onAction="#saveQuery" text="SAVE SEARCH" prefWidth="120" />
+            <Button onAction="#loadQuery" text="LOAD SEARCH" prefWidth="120" />
         </VBox>
     </left>
 
