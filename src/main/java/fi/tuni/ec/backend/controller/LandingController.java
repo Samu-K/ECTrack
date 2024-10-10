@@ -111,6 +111,7 @@ public class LandingController {
       queryNotfoundAlert.showAndWait();
       return;
     }
+    // ArrayList third value is params in format country;region
     String country = query.get(2).split(";")[0];
     String region = query.get(2).split(";")[1];
     countryCb.setValue(country);

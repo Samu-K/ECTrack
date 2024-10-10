@@ -15,7 +15,7 @@ import javafx.util.Pair;
 public class QueryHandler {
 
   private final File queryFile;
-  private final String[] headers = {"Name", "Modified", "Parameters"};
+  // store queries in map to search by name
   private HashMap<String, Pair<String, String>> queries;
 
   /**
@@ -24,7 +24,8 @@ public class QueryHandler {
   private void initFile() {
     try {
       FileWriter writer = new FileWriter(queryFile);
-      writer.append(String.join(",", headers));
+      // write headers
+      writer.append("Name, Modified, Parameters");
       writer.append("\n");
       writer.flush();
       writer.close();
@@ -67,17 +68,14 @@ public class QueryHandler {
   /**
    * Save the queries to the file.
    */
-  public void saveQueries() {
+  public void saveQueryToFile(String name, Pair<String, String> query) {
     try {
       FileWriter writer = new FileWriter(queryFile, true);
-      for (HashMap.Entry<String, Pair<String, String>> entry : queries.entrySet()) {
-        writer.append(entry.getKey());
-        writer.append(",");
-        writer.append(entry.getValue().getKey());
-        writer.append(",");
-        writer.append(entry.getValue().getValue());
-        writer.append("\n");
-      }
+      String line = name
+          + "," + query.getKey()
+          + "," + query.getValue() + "\n";
+      writer.append(line);
+
       writer.flush();
       writer.close();
     } catch (Exception e) {
@@ -85,13 +83,16 @@ public class QueryHandler {
     }
   }
 
+  /**
+   * Load queries from the file.
+   */
   private void loadQueries() {
-    // Load queries from file
     try {
       Scanner scanner = new Scanner(queryFile);
       scanner.nextLine(); // Skip headers
       while (scanner.hasNextLine()) {
         String[] line = scanner.nextLine().split(",");
+        // first element is name, second is modified and third is params
         queries.put(line[0], new Pair<>(line[1], line[2]));
       }
       scanner.close();
@@ -111,7 +112,7 @@ public class QueryHandler {
    */
   public void saveQuery(String name, String modified, String params) {
     queries.put(name, new Pair<>(modified, params));
-    saveQueries();
+    saveQueryToFile(name, new Pair<>(modified, params));
   }
 
   /**
