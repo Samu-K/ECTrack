@@ -90,7 +90,7 @@ public class LandingController {
   public void saveQuery() {
     String country = countryCb.getValue();
     String region = regionCb.getValue();
-    String params = country + "," + region;
+    String params = country + ";" + region;
     String name = queryNamePopup();
     queryHandler.saveQuery(name, curDate.toString(), params);
   }
