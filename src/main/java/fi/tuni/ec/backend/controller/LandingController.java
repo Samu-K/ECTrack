@@ -31,6 +31,10 @@ public class LandingController {
       Alert.AlertType.ERROR,
       "Date cannot be in the future",
       ButtonType.OK);
+  private final Alert queryNotfoundAlert = new Alert(
+      Alert.AlertType.ERROR,
+      "Query not found",
+      ButtonType.OK);
 
   private static final List<String> REGIONS = List.of(
       "Europe", "Asia", "Africa", "Americas", "Oceania");
@@ -103,8 +107,12 @@ public class LandingController {
   public void loadQuery() {
     String name = queryNamePopup();
     ArrayList<String> query = queryHandler.loadQuery(name);
-    String country = query.get(2).split(",")[0];
-    String region = query.get(2).split(",")[1];
+    if (query == null) {
+      queryNotfoundAlert.showAndWait();
+      return;
+    }
+    String country = query.get(2).split(";")[0];
+    String region = query.get(2).split(";")[1];
     countryCb.setValue(country);
     regionCb.setValue(region);
   }
