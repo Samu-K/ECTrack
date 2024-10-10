@@ -69,7 +69,7 @@ public class QueryHandler {
    */
   public void saveQueries() {
     try {
-      FileWriter writer = new FileWriter(queryFile);
+      FileWriter writer = new FileWriter(queryFile, true);
       for (HashMap.Entry<String, Pair<String, String>> entry : queries.entrySet()) {
         writer.append(entry.getKey());
         writer.append(",");
@@ -111,6 +111,7 @@ public class QueryHandler {
    */
   public void saveQuery(String name, String modified, String params) {
     queries.put(name, new Pair<>(modified, params));
+    saveQueries();
   }
 
   /**
