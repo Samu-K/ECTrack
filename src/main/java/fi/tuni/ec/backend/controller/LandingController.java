@@ -2,7 +2,9 @@ package fi.tuni.ec.backend.controller;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.util.*;
+
+import fi.tuni.ec.backend.services.ApiService;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -29,9 +31,6 @@ public class LandingController {
 
   private static final List<String> REGIONS = List.of(
       "Europe", "Asia", "Africa", "Americas", "Oceania");
-  private static final List<String> ALL_COUNTRIES = List.of(
-      "Finland", "Sweden", "Norway", "Denmark", "Iceland", "Estonia", "Latvia", "Lithuania"
-  );
 
   // describes what time period is currently selected
   private enum DateState {
@@ -51,6 +50,8 @@ public class LandingController {
    */
   @FXML
   public void initialize() {
+    var apiService = new ApiService();
+
     curDate = LocalDate.now();
     date = curDate;
     dateLabel.setText(dateFormatter.format(date));
@@ -58,7 +59,11 @@ public class LandingController {
 
     regionCb.getItems().addAll(REGIONS);
     regionCb.getSelectionModel().selectFirst();
-    countryCb.getItems().addAll(ALL_COUNTRIES);
+
+
+    var countries = apiService.getCountries();
+
+    countryCb.getItems().addAll(countries);
     countryCb.getSelectionModel().selectFirst();
   }
 
