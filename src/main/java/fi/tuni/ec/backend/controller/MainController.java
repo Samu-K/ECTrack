@@ -1,6 +1,9 @@
 package fi.tuni.ec.backend.controller;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -13,6 +16,7 @@ import javafx.stage.Stage;
 public class MainController {
   private Stage primaryStage;
   private BorderPane rootLayout;
+  private ApiService apiService;
 
   /**
    * Constructor for MainController.
@@ -21,6 +25,7 @@ public class MainController {
    */
   public MainController(Stage primaryStage) {
     this.primaryStage = primaryStage;
+    this.apiService = new ApiService();
     initRootLayout();
     showMainPage();
   }
@@ -30,6 +35,25 @@ public class MainController {
     Scene scene = new Scene(rootLayout);
     primaryStage.setScene(scene);
     primaryStage.show();
+  }
+
+  /**
+   * Method to fetch electricity pricing data from the API.
+   *
+   * For now just print the data in a nice format.
+   */
+  public void fetchData() {
+    String url = "https://api.porssisahko.net/v1/latest-prices.json";
+    try {
+      // Fetch the data
+      List<Map<String, Object>> pricingData = apiService.fetchElectricityPricing(url);
+
+      // For now just print the data in a nice format
+      pricingData.forEach(System.out::println);
+
+    } catch (IOException e) {
+      System.out.println("Error fetching data: " + e.getMessage());
+    }
   }
 
   /**
