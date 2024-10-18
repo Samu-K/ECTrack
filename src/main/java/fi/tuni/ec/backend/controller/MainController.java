@@ -3,7 +3,6 @@ package fi.tuni.ec.backend.controller;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -39,7 +38,6 @@ public class MainController {
 
   /**
    * Method to fetch electricity pricing data from the API.
-   *
    * For now just print the data in a nice format.
    */
   public void fetchData() {
