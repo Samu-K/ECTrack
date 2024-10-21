@@ -59,9 +59,8 @@
             </HBox>
 
             <!-- Graph Area (Placeholder) -->
-            <StackPane style="-fx-background-color: #3E3B50;" prefHeight="500">
-                <Label text="Graph Placeholder" style="-fx-text-fill: white; -fx-font-size: 24px;" />
-            </StackPane>
+            <StackPane  fx:id="graphPlaceholder" style="-fx-background-color: #3E3B50;" prefHeight="500"/>
+
         </VBox>
     </center>
 </BorderPane>

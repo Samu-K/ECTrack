@@ -1,17 +1,30 @@
 package fi.tuni.ec.backend.controller;
 
 import fi.tuni.ec.backend.QueryHandler;
+
+import java.io.FileReader;
+import java.io.IOException;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+
 import javafx.fxml.FXML;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.StackPane;
+
 
 /**
  * Controller for landing page.
@@ -47,6 +60,17 @@ public class LandingController {
     DAY, WEEK, MONTH, YEAR, YTD
   }
 
+  public class PriceData {
+    private Double price;
+    private String startDate;
+    private String endDate;
+
+    public PriceData(Double price, String startDate, String endDate) {
+      this.price = price;
+      this.startDate = startDate;
+      this.endDate = endDate;
+    }
+  }
 
   // FXML elements
   @FXML Label dateLabel;
@@ -54,6 +78,7 @@ public class LandingController {
   @FXML Button nextDateButton;
   @FXML ComboBox<String> regionCb;
   @FXML ComboBox<String> countryCb;
+  @FXML private StackPane graphPlaceholder;
 
   /**
    * Initializes the controller. Sets date to current date and populates comboboxes.
@@ -70,6 +95,9 @@ public class LandingController {
     regionCb.getSelectionModel().selectFirst();
     countryCb.getItems().addAll(ALL_COUNTRIES);
     countryCb.getSelectionModel().selectFirst();
+
+    var priceData = fetchData();
+    createGraph(priceData);
   }
 
   /**
@@ -308,4 +336,51 @@ public class LandingController {
     prevDateButton.setVisible(false);
   }
 
+  private List<PriceData> fetchData () {
+    String url = "https://api.porssisahko.net/v1/latest-prices.json";
+    try {
+      var apiService = new ApiService();
+
+      List<Map<String, Object>> pricingData = apiService.fetchElectricityPricing(url);
+
+      List<PriceData> priceDataList = new ArrayList<>();
+
+      for (Map<String, Object> entry : pricingData) {
+        priceDataList.add(new PriceData(
+            (Double) entry.get("price"),
+            (String) entry.get("startDate"),
+            (String) entry.get("endDate")
+        ));
+      }
+
+      return priceDataList;
+
+    } catch (IOException e) {
+      System.out.println("Error fetching data: " + e.getMessage());
+      return null;
+    }
+  }
+  private void createGraph(List<PriceData> priceData) {
+    final NumberAxis yAxis = new NumberAxis(-2, 2, 1);
+    final CategoryAxis xAxis = new CategoryAxis();
+
+    final LineChart<String, Number> lineChart = new LineChart<>(xAxis, yAxis);
+    yAxis.setLabel("€ / Kw");
+    xAxis.setLabel("Time");
+    lineChart.setTitle("Electricity Prices");
+
+    XYChart.Series<String, Number> priceSeries = new XYChart.Series<>();
+
+    priceSeries.setName("Electricity Prices");
+
+    for (PriceData data : priceData) {
+      var startTime = ZonedDateTime.parse(data.startDate, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+      var price = data.price;
+
+      priceSeries.getData().add(new XYChart.Data<>(String.valueOf(startTime), price));
+    }
+
+    lineChart.getData().addAll(priceSeries);
+    graphPlaceholder.getChildren().add(lineChart);
+  }
 }
