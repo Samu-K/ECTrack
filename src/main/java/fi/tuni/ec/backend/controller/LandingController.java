@@ -1,17 +1,28 @@
 package fi.tuni.ec.backend.controller;
 
 import fi.tuni.ec.backend.QueryHandler;
+
+import java.io.FileReader;
+import java.io.IOException;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import javafx.fxml.FXML;
+import javafx.scene.chart.*;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.StackPane;
+
 
 /**
  * Controller for landing page.
@@ -47,6 +58,29 @@ public class LandingController {
     DAY, WEEK, MONTH, YEAR, YTD
   }
 
+  public class PriceData {
+    private Double price;
+    private String startDate;
+    private String endDate;
+
+    public PriceData(Double price, String startDate, String endDate) {
+      this.price = price;
+      this.startDate = startDate;
+      this.endDate = endDate;
+    }
+  }
+
+  public class UsageData {
+    private Double kWh;
+    private String startDate;
+    private String endDate;
+
+    public UsageData(Double kWh, String startDate, String endDate) {
+      this.kWh = kWh;
+      this.startDate = startDate;
+      this.endDate = endDate;
+    }
+  }
 
   // FXML elements
   @FXML Label dateLabel;
@@ -54,6 +88,8 @@ public class LandingController {
   @FXML Button nextDateButton;
   @FXML ComboBox<String> regionCb;
   @FXML ComboBox<String> countryCb;
+  @FXML private StackPane graphPlaceholder;
+  @FXML private StackPane graphPlaceholder2;
 
   /**
    * Initializes the controller. Sets date to current date and populates comboboxes.
@@ -70,6 +106,9 @@ public class LandingController {
     regionCb.getSelectionModel().selectFirst();
     countryCb.getItems().addAll(ALL_COUNTRIES);
     countryCb.getSelectionModel().selectFirst();
+
+    var priceData = fetchData();
+    createGraph(priceData);
   }
 
   /**
@@ -308,4 +347,85 @@ public class LandingController {
     prevDateButton.setVisible(false);
   }
 
+  // Copied from MainController for now
+  private List<PriceData> fetchData () {
+    String url = "https://api.porssisahko.net/v1/latest-prices.json";
+    try {
+      var apiService = new ApiService();
+
+      List<Map<String, Object>> pricingData = apiService.fetchElectricityPricing(url);
+
+      List<PriceData> priceDataList = new ArrayList<>();
+
+      for (Map<String, Object> entry : pricingData) {
+        priceDataList.add(new PriceData(
+            (Double) entry.get("price"),
+            (String) entry.get("startDate"),
+            (String) entry.get("endDate")
+        ));
+      }
+
+      return priceDataList;
+
+    } catch (IOException e) {
+      System.out.println("Error fetching data: " + e.getMessage());
+      return null;
+    }
+  }
+  public void createGraph(List<PriceData> priceData) {
+    // change this to selected date, possibly coming as input
+    var currentDate = LocalDate.now().toString();
+
+    final var lineYAxis = new NumberAxis();
+    final var lineXAxis = new CategoryAxis();
+    final var lineChart = new LineChart<>(lineXAxis, lineYAxis);
+    lineYAxis.setLabel("€ / Kw");
+    lineChart.setTitle("Electricity Prices");
+    XYChart.Series<String, Number> priceSeries = new XYChart.Series<>();
+
+    final var barYAxis = new NumberAxis();
+    final var barXAxis = new CategoryAxis();
+    final var barChart = new BarChart<>(barXAxis, barYAxis);
+    barYAxis.setLabel("kWh");
+    barChart.setTitle("Electricity Usage");
+    barChart.setCategoryGap(5);
+    XYChart.Series<String, Number> usageSeries = new XYChart.Series<>();
+
+    var filteredData = priceData.stream()
+        .filter(data -> ZonedDateTime.parse(data.startDate, DateTimeFormatter.ISO_ZONED_DATE_TIME)
+            .toLocalDate().toString().equals(currentDate)).toList();
+
+    //Change to use which timerange format is wanted
+    for (int hour = 0; hour < 24; hour++) {
+      priceSeries.getData().add(new XYChart.Data<>(String.valueOf(hour), null));
+
+      usageSeries.getData().add(new XYChart.Data<>(String.valueOf(hour), null));
+    }
+
+    for (PriceData data : filteredData) {
+      var startTime = ZonedDateTime.parse(data.startDate, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+      var price = data.price;
+
+      var hour = String.valueOf(startTime.getHour());
+      priceSeries.getData().set(startTime.getHour(), new XYChart.Data<>(hour, price));
+    }
+
+    // Change this to use usage data which should be added as second input
+    for (var data : filteredData) {
+      var startTime = ZonedDateTime.parse(data.startDate, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+      var price = data.price;
+
+      var hour = String.valueOf(startTime.getHour());
+      usageSeries.getData().set(startTime.getHour(), new XYChart.Data<>(hour, price));
+    }
+
+    lineChart.getStylesheets().add(getClass().getResource("landing.css").toExternalForm());
+    barChart.getStylesheets().add(getClass().getResource("landing.css").toExternalForm());
+
+    lineChart.getData().add(priceSeries);
+    barChart.getData().add(usageSeries);
+
+    graphPlaceholder.getChildren().add(lineChart);
+    graphPlaceholder2.getChildren().add(barChart);
+  }
 }

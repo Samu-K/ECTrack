@@ -10,3 +10,19 @@
 .date-filter-button:hover {
     -fx-background-color: lightgrey;
 }
+.chart-title, .axis-label, .axis-tick-mark {
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+}
+
+.chart-line-symbol {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-padding: 0;
+}
+
+.axis {
+    -fx-tick-label-fill: white;
+}
+
+
