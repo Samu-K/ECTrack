@@ -109,6 +109,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
                     <include>**/*.css</include>
                     <include>**/*.png</include>
                     <include>**/*.fxml</include>
+                    <include>**/*.properties</include>
                 </includes>
             </resource>
         </resources>
