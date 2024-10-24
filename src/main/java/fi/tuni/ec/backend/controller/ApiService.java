@@ -5,16 +5,13 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-// import java.time.LocalDate;
-// import java.time.YearMonth;
-// import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.xml.parsers.DocumentBuilderFactory;
-import org.w3c.dom.NodeList;
 import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
 /**
  * Service for fetching data from the API.
@@ -24,13 +21,13 @@ public class ApiService {
   private static final String API_URL = "https://web-api.tp.entsoe.eu/api";
   private static String apiKey;
 
-
   // Debugging line to print the location of config.properties
   static {
-    System.out.println(ApiService.class.getClassLoader().getResource("fi/tuni/ec/backend/controller/config.properties"));
+    System.out.println(ApiService.class.getClassLoader()
+        .getResource("fi/tuni/ec/backend/controller/config.properties"));
   }
 
-  // Map for storing area (contry) codes
+  // Map for storing area (country) codes
   public static final Map<String, String> COUNTRY_CODES = Map.of(
       "Finland", "10YFI-1--------U",
       "Germany", "10YDE-1--------W",
@@ -60,11 +57,12 @@ public class ApiService {
 
   /**
    * Fetch the electricity pricing data.
-   * 
    */
-  public List<Double> fetchPricing(String country, String periodStart, String periodEnd) throws Exception {
+  public List<Double> fetchPricing(String country, String periodStart, String periodEnd) 
+      throws Exception {
     String areaDomain = COUNTRY_CODES.get(country);
-    String query = String.format("?securityToken=%s&documentType=A44&processType=A16&in_Domain=%s&periodStart=%s&periodEnd=%s",
+    String query = String.format(
+        "?securityToken=%s&documentType=A44&processType=A16&in_Domain=%s&periodStart=%s&periodEnd=%s",
         getApiKey(), areaDomain, periodStart, periodEnd);
 
     URI uri = new URI(API_URL + query);
@@ -82,11 +80,12 @@ public class ApiService {
 
   /**
    * Fetch electricity usage data.
-   * 
    */
-  public List<Double> fetchUsage(String country, String periodStart, String periodEnd) throws Exception {
+  public List<Double> fetchUsage(String country, String periodStart, String periodEnd) 
+      throws Exception {
     String areaDomain = COUNTRY_CODES.get(country);
-    String query = String.format("?securityToken=%s&documentType=A65&processType=A16&in_Domain=%s&periodStart=%s&periodEnd=%s",
+    String query = String.format(
+        "?securityToken=%s&documentType=A65&processType=A16&in_Domain=%s&periodStart=%s&periodEnd=%s",
         getApiKey(), areaDomain, periodStart, periodEnd);
 
     URI uri = new URI(API_URL + query);
@@ -102,12 +101,12 @@ public class ApiService {
     }
   }
 
-
   /**
    * Parse pricing XML response into a list of doubles.
    */
   private List<Double> parsePricingResponse(InputStream responseStream) throws Exception {
-    Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(responseStream);
+    Document document = DocumentBuilderFactory.newInstance()
+        .newDocumentBuilder().parse(responseStream);
     NodeList priceNodes = document.getElementsByTagName("price.amount");
     List<Double> prices = new ArrayList<>();
     for (int i = 0; i < priceNodes.getLength(); i++) {
@@ -116,12 +115,12 @@ public class ApiService {
     return prices;
   }
 
-
   /**
    * Parse usage XML response into a list of doubles.
    */
   private List<Double> parseUsageResponse(InputStream responseStream) throws Exception {
-    Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(responseStream);
+    Document document = DocumentBuilderFactory.newInstance()
+        .newDocumentBuilder().parse(responseStream);
     NodeList priceNodes = document.getElementsByTagName("quantity");
     List<Double> prices = new ArrayList<>();
     for (int i = 0; i < priceNodes.getLength(); i++) {
