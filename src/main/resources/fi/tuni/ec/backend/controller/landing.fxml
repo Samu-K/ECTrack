@@ -60,6 +60,7 @@
 
             <!-- Graph Area (Placeholder) -->
             <StackPane  fx:id="graphPlaceholder" style="-fx-background-color: #3E3B50;" prefHeight="500"/>
+            <StackPane  fx:id="graphPlaceholder2" style="-fx-background-color: #3E3B50;" prefHeight="500"/>
 
         </VBox>
     </center>
