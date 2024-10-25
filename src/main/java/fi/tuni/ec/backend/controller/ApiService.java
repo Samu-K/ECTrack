@@ -85,7 +85,7 @@ public class ApiService {
       throws Exception {
     String areaDomain = COUNTRY_CODES.get(country);
     String query = String.format(
-        "?securityToken=%s&documentType=A65&processType=A16&in_Domain=%s&periodStart=%s&periodEnd=%s",
+        "?securityToken=%s&documentType=A65&processType=A16&outBiddingZone_Domain=%s&periodStart=%s&periodEnd=%s",
         getApiKey(), areaDomain, periodStart, periodEnd);
 
     URI uri = new URI(API_URL + query);
