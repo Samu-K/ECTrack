@@ -376,12 +376,14 @@ public class LandingController {
     // change this to selected date, possibly coming as input
     var currentDate = LocalDate.now().toString();
 
+    //customize: new NumberAxis(min value, max value, interval)
     final var lineYAxis = new NumberAxis();
     final var lineXAxis = new CategoryAxis();
     final var lineChart = new LineChart<>(lineXAxis, lineYAxis);
     lineYAxis.setLabel("€ / Kw");
     lineChart.setTitle("Electricity Prices");
     XYChart.Series<String, Number> priceSeries = new XYChart.Series<>();
+    priceSeries.setName("Electricity Prices");
 
     final var barYAxis = new NumberAxis();
     final var barXAxis = new CategoryAxis();
@@ -390,6 +392,7 @@ public class LandingController {
     barChart.setTitle("Electricity Usage");
     barChart.setCategoryGap(5);
     XYChart.Series<String, Number> usageSeries = new XYChart.Series<>();
+    usageSeries.setName("Electricity Usage");
 
     var filteredData = priceData.stream()
         .filter(data -> ZonedDateTime.parse(data.startDate, DateTimeFormatter.ISO_ZONED_DATE_TIME)
