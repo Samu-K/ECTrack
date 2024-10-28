@@ -20,15 +20,6 @@
     -fx-tick-label-fill: white;
 }
 
-.chart-title, .axis-label, .axis-tick-mark {
-    -fx-text-fill: white;
-    -fx-font-size: 16px;
-}
-
-.axis {
-    -fx-tick-label-fill: white;
-}
-
 .chart-line-symbol {
     -fx-background-color: null;
     -fx-background-insets: 0;
