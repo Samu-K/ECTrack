@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.geometry.Insets?>
+<GridPane fx:id="gridPane" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fi.tuni.ec.backend.controller.QueryLoadController">
+    <padding>
+        <Insets top="10" right="10" bottom="10" left="10"/>
+    </padding>
+
+    <!-- TableView for displaying tabular data -->
+    <TableView fx:id="tableView" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
+        <columns>
+            <!-- Example column 1 -->
+            <TableColumn fx:id="column1" text="Column 1"/>
+            <!-- Example column 2 -->
+            <TableColumn fx:id="column2" text="Column 2"/>
+            <!-- Add more columns as necessary -->
+        </columns>
+    </TableView>
+
+    <!-- Close button for the popup -->
+    <Button text="Close" GridPane.rowIndex="1" GridPane.columnIndex="1" onAction="#closePopup"/>
+</GridPane>
