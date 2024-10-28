@@ -2,16 +2,11 @@ package fi.tuni.ec.backend.controller;
 
 import fi.tuni.ec.backend.QueryHandler;
 
-import java.io.FileReader;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import javafx.fxml.FXML;
 import javafx.scene.chart.*;
@@ -58,30 +53,6 @@ public class LandingController {
     DAY, WEEK, MONTH, YEAR, YTD
   }
 
-  public class PriceData {
-    private Double price;
-    private String startDate;
-    private String endDate;
-
-    public PriceData(Double price, String startDate, String endDate) {
-      this.price = price;
-      this.startDate = startDate;
-      this.endDate = endDate;
-    }
-  }
-
-  public class UsageData {
-    private Double kWh;
-    private String startDate;
-    private String endDate;
-
-    public UsageData(Double kWh, String startDate, String endDate) {
-      this.kWh = kWh;
-      this.startDate = startDate;
-      this.endDate = endDate;
-    }
-  }
-
   // FXML elements
   @FXML Label dateLabel;
   @FXML Button prevDateButton;
@@ -107,8 +78,19 @@ public class LandingController {
     countryCb.getItems().addAll(ALL_COUNTRIES);
     countryCb.getSelectionModel().selectFirst();
 
-    var priceData = fetchData();
-    createGraph(priceData);
+    // Take this from selected country after country selection implemented
+    var country = "Finland";
+
+    // change this to selected date
+    var date = LocalDate.now();
+
+    // Take these from selected dates
+    var periodStart = date.format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+    var periodEnd = date.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
+
+    var priceData = fetchAndFormPriceData(country, periodStart, periodEnd);
+
+    createGraph(priceData, periodStart, periodEnd);
   }
 
   /**
@@ -348,34 +330,19 @@ public class LandingController {
   }
 
   // Copied from MainController for now
-  private List<PriceData> fetchData () {
-    String url = "https://api.porssisahko.net/v1/latest-prices.json";
+  private List<Double> fetchAndFormPriceData(String country, String periodStart, String periodEnd) {
     try {
       var apiService = new ApiService();
 
-      List<Map<String, Object>> pricingData = apiService.fetchElectricityPricing(url);
-
-      List<PriceData> priceDataList = new ArrayList<>();
-
-      for (Map<String, Object> entry : pricingData) {
-        priceDataList.add(new PriceData(
-            (Double) entry.get("price"),
-            (String) entry.get("startDate"),
-            (String) entry.get("endDate")
-        ));
-      }
-
-      return priceDataList;
-
+      return apiService.fetchPricing(country, periodStart, periodEnd);
     } catch (IOException e) {
       System.out.println("Error fetching data: " + e.getMessage());
       return null;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
-  public void createGraph(List<PriceData> priceData) {
-    // change this to selected date, possibly coming as input
-    var currentDate = LocalDate.now().toString();
-
+  private void createGraph(List<Double> priceData, String periodStart, String periodEnd) {
     //customize: new NumberAxis(min value, max value, interval)
     final var lineYAxis = new NumberAxis();
     final var lineXAxis = new CategoryAxis();
@@ -394,32 +361,12 @@ public class LandingController {
     XYChart.Series<String, Number> usageSeries = new XYChart.Series<>();
     usageSeries.setName("Electricity Usage");
 
-    var filteredData = priceData.stream()
-        .filter(data -> ZonedDateTime.parse(data.startDate, DateTimeFormatter.ISO_ZONED_DATE_TIME)
-            .toLocalDate().toString().equals(currentDate)).toList();
 
-    //Change to use which timerange format is wanted
-    for (int hour = 0; hour < 24; hour++) {
-      priceSeries.getData().add(new XYChart.Data<>(String.valueOf(hour), null));
+    for (int dateTime = 0; dateTime < priceData.size(); dateTime++) {
+      priceSeries.getData().add(new XYChart.Data<>(String.valueOf(dateTime), priceData.get(dateTime)));
 
-      usageSeries.getData().add(new XYChart.Data<>(String.valueOf(hour), null));
-    }
-
-    for (PriceData data : filteredData) {
-      var startTime = ZonedDateTime.parse(data.startDate, DateTimeFormatter.ISO_ZONED_DATE_TIME);
-      var price = data.price;
-
-      var hour = String.valueOf(startTime.getHour());
-      priceSeries.getData().set(startTime.getHour(), new XYChart.Data<>(hour, price));
-    }
-
-    // Change this to use usage data which should be added as second input
-    for (var data : filteredData) {
-      var startTime = ZonedDateTime.parse(data.startDate, DateTimeFormatter.ISO_ZONED_DATE_TIME);
-      var price = data.price;
-
-      var hour = String.valueOf(startTime.getHour());
-      usageSeries.getData().set(startTime.getHour(), new XYChart.Data<>(hour, price));
+      //For now use priceData
+      usageSeries.getData().add(new XYChart.Data<>(String.valueOf(dateTime), priceData.get(dateTime)));
     }
 
     lineChart.getStylesheets().add(getClass().getResource("landing.css").toExternalForm());
