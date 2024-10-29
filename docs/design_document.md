@@ -37,14 +37,14 @@ The View can observe changes in the Model using the Observer pattern. This would
 
 ## APIs and Data Sources
 
-We have not yet fully committed to any particular APIs, but we are planning to use the following APIs:
-
--   **Electricity Price API**: This API provides real-time electricity prices. We are testing the porssisahko.net to pull data for electricity pricing, but we are exploring other options as well to get data from more than one country or region.
--   **Energy Usage Data API**: To track electricity consumption, we are planning on using the data set from Electricity Maps. They also have an API, but it only provides real-time data, so we plan on using their free data set to visualize previous data. For prototyping, we are using a mock “data set”.
+We switched from the intial API choice to the ENTSO-E Transparency Platform API, which provides extensive data on electricity prices and consumption across Europe. This makes it better suited for our purposes. The API alllows us to fetch pricing and usage data for multiple countries and supports various time intervals, enabling ECTrack to provide both realtime and historical insights.
+* Pricing data: Day-ahead prices can be fetched hourly, allowing users to view electricity pricing trends in their region of interest.*
+* Usage data: Electricity usage data, retrieved at intervals as frequent as every quarter hour, allows users to monitor consumption patterns over time.*
+(*There are some kinks with the API requests to straighten out for now.)
 
 ### Data Handling
 
-Data will be fetched from external APIs in JSON format, parsed using libraries such as Gson or Jackson, and then stored in the Model. The app will allow the user to visualize historical data as well as view real-time trends.
+Data is fetched in XML format from the ENTSO-E API, parsed using Java's XML parsing libraries, and stored in the Model. The app allows the user to visulize historical data (e.g., hourly, daily, and weekly views) as well as current trends by region.
 
 ## User Interface
 
@@ -52,12 +52,12 @@ Data will be fetched from external APIs in JSON format, parsed using libraries s
 
 The initial wireframe focuses on simplicity:
 
--   **Dashboard**: Displays a graph showing electricity usage over time and pricing trends.
+-   **Dashboard**: Displays two separate graphs for both electricity usage and electricity pricing.
 -   **Controls**: Users can filter data by time (e.g., day, week, month) and region.
 
 #### Prototype Day View
 
-![Wireframe](images/proto_d_view.jpg)
+![Wireframe](images/updated_wireframe.png)
 
 ## Future Plans and Considerations
 
