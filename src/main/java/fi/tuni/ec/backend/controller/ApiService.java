@@ -13,6 +13,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+
 /**
  * Service for fetching data from the API.
  */
@@ -58,11 +59,12 @@ public class ApiService {
   /**
    * Fetch the electricity pricing data.
    */
-  public List<Double> fetchPricing(String country, String periodStart, String periodEnd) 
+  public List<Double> fetchPricing(String country, String periodStart, String periodEnd)
       throws Exception {
     String areaDomain = COUNTRY_CODES.get(country);
     String query = String.format(
-        "?securityToken=%s&documentType=A44&processType=A16&in_Domain=%s&periodStart=%s&periodEnd=%s",
+        "?securityToken=%s&documentType=A44"
+        + "&processType=A16&in_Domain=%s&periodStart=%s&periodEnd=%s",
         getApiKey(), areaDomain, periodStart, periodEnd);
 
     URI uri = new URI(API_URL + query);
@@ -81,11 +83,12 @@ public class ApiService {
   /**
    * Fetch electricity usage data.
    */
-  public List<Double> fetchUsage(String country, String periodStart, String periodEnd) 
+  public List<Double> fetchUsage(String country, String periodStart, String periodEnd)
       throws Exception {
     String areaDomain = COUNTRY_CODES.get(country);
     String query = String.format(
-        "?securityToken=%s&documentType=A65&processType=A16&outBiddingZone_Domain=%s&periodStart=%s&periodEnd=%s",
+        "?securityToken=%s&documentType=A65"
+        + "&processType=A16&outBiddingZone_Domain=%s&periodStart=%s&periodEnd=%s",
         getApiKey(), areaDomain, periodStart, periodEnd);
 
     URI uri = new URI(API_URL + query);
