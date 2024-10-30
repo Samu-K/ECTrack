@@ -29,7 +29,7 @@ jobs:
 
     - shell: bash
       run: |
-        ls src/main/resources/fi/tuni/ec/backend/controller
+        touch src/main/resources/fi/tuni/ec/backend/controller/config.properties && config.properties << echo "entsoe_api_key=$API_KEY" 
       
     - name: Set up JDK 22
       uses: actions/setup-java@v4
