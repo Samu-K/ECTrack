@@ -21,13 +21,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Set up environment
+  
+    - shell: bash
       env:
         API_KEY: ${{ secrets.API_KEY }}
-      run: echo "API Key set up"
-
-    - shell: bash
       run: |
         touch src/main/resources/fi/tuni/ec/backend/controller/config.properties && printf "entsoe_api_key=$API_KEY" >> src/main/resources/fi/tuni/ec/backend/controller/config.properties && cat src/main/resources/fi/tuni/ec/backend/controller/config.properties
       
