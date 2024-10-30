@@ -21,6 +21,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Set up environment
+      env:
+        API_KEY: ${{ secrets.API_KEY }}
+      run: echo "API Key set up"
+
+    - shell: bash
+      run: |
+        touch src/main/resources/config.properties && echo "entsoe_api_key=$API_KEY" >> src/main/resources/config.properties
+      
     - name: Set up JDK 22
       uses: actions/setup-java@v4
       with:
