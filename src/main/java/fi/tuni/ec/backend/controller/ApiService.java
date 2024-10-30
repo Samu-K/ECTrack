@@ -64,9 +64,9 @@ public class ApiService {
     String areaDomain = COUNTRY_CODES.get(country);
     String query = String.format(
         "?securityToken=%s&documentType=A44"
-        + "&processType=A16&in_Domain=%s&periodStart=%s&periodEnd=%s",
-        getApiKey(), areaDomain, periodStart, periodEnd);
-
+        + "&processType=A16&in_Domain=%s&out_Domain=%s&periodStart=%s&periodEnd=%s",
+        getApiKey(), areaDomain, areaDomain, periodStart, periodEnd);
+    System.out.println("Query: " + query);
     URI uri = new URI(API_URL + query);
     URL url = uri.toURL();
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
