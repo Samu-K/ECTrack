@@ -1,6 +1,8 @@
 package fi.tuni.ec.backend.controller;
 
 import java.util.List;
+
+import fi.tuni.ec.api.ApiService;
 import junit.framework.TestCase;
 
 /**

@@ -1,4 +1,4 @@
-package fi.tuni.ec.backend.controller;
+package fi.tuni.ec.api;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,12 +22,6 @@ public class ApiService {
   private static final String API_URL = "https://web-api.tp.entsoe.eu/api";
   private static String apiKey;
 
-  // Debugging line to print the location of config.properties
-  static {
-    System.out.println(ApiService.class.getClassLoader()
-        .getResource("fi/tuni/ec/backend/controller/config.properties"));
-  }
-
   // Map for storing area (country) codes
   public static final Map<String, String> COUNTRY_CODES = Map.of(
       "Finland", "10YFI-1--------U",
@@ -39,7 +33,7 @@ public class ApiService {
   // Static block to load the API key from config.properties
   static {
     try (InputStream input = ApiService.class.getClassLoader()
-        .getResourceAsStream("fi/tuni/ec/backend/controller/config.properties")) {
+        .getResourceAsStream("config.properties")) {
       Properties prop = new Properties();
       if (input == null) {
         throw new IOException("Could not find config.properties");
@@ -66,7 +60,6 @@ public class ApiService {
         "?securityToken=%s&documentType=A44"
         + "&processType=A16&in_Domain=%s&out_Domain=%s&periodStart=%s&periodEnd=%s",
         getApiKey(), areaDomain, areaDomain, periodStart, periodEnd);
-    System.out.println("Query: " + query);
     URI uri = new URI(API_URL + query);
     URL url = uri.toURL();
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
