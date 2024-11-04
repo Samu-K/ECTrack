@@ -71,7 +71,7 @@ public class ApiService {
 
     if (connection.getResponseCode() == 200) {
       InputStream responseStream = connection.getInputStream();
-      return parsePricingResponse(responseStream);
+      return parseResponse(responseStream, "price");
     } else {
       throw new IOException("Failed to fetch pricing data: HTTP " + connection.getResponseCode());
     }
@@ -95,19 +95,26 @@ public class ApiService {
 
     if (connection.getResponseCode() == 200) {
       InputStream responseStream = connection.getInputStream();
-      return parseUsageResponse(responseStream);
+      return parseResponse(responseStream, "usage");
     } else {
       throw new IOException("Failed to fetch usage data: HTTP " + connection.getResponseCode());
     }
   }
 
+
   /**
-   * Parse pricing XML response into a list of doubles.
+   * Parse usage XML response into a list of ApiData.
    */
-  private List<ApiData> parsePricingResponse(InputStream responseStream) throws Exception {
+  private List<ApiData> parseResponse(InputStream responseStream, String type) throws Exception {
+    String dataString = switch (type) {
+      case "price" -> "price.amount";
+      case "usage" -> "quantity";
+      default -> throw new IllegalArgumentException("Invalid type: " + type);
+    };
+
     Document document = DocumentBuilderFactory.newInstance()
         .newDocumentBuilder().parse(responseStream);
-    List<ApiData> prices = new ArrayList<>();
+    List<ApiData> dataList = new ArrayList<>();
 
     // Define namespaces
     document.getDocumentElement().normalize();
@@ -131,65 +138,20 @@ public class ApiService {
       NodeList points = periodElement.getElementsByTagName("Point");
       for (int j = 0; j < points.getLength(); j++) {
         Element pointElement = (Element) points.item(j);
-        double price = Double.parseDouble(pointElement.getElementsByTagName("price.amount")
+        double dataPoint = Double.parseDouble(pointElement.getElementsByTagName(dataString)
             .item(0).getTextContent());
         // Calculate the date of the price point based on the start date and interval
         LocalDateTime date = startDate.plusMinutes((long) interval * (j - 1));
 
         ApiData data = new ApiData();
-        data.price = price;
+        data.data = dataPoint;
         data.date = date;
         data.interval = interval;
-        prices.add(data);
+
+        dataList.add(data);
       }
     }
-    return prices;
-
-  }
-
-  /**
-   * Parse usage XML response into a list of doubles.
-   */
-  private List<ApiData> parseUsageResponse(InputStream responseStream) throws Exception {
-    Document document = DocumentBuilderFactory.newInstance()
-        .newDocumentBuilder().parse(responseStream);
-    List<ApiData> usageData = new ArrayList<>();
-
-    // Define namespaces
-    document.getDocumentElement().normalize();
-
-    // Get Period nodes
-    NodeList periodList = document.getElementsByTagName("Period");
-    for (int i = 0; i < periodList.getLength(); i++) {
-      // First two nodes are metadata, the rest are price points
-      Element periodElement = (Element) periodList.item(i);
-
-      // Start date of the period
-      LocalDateTime startDate = LocalDateTime.parse(
-          periodElement.getElementsByTagName("start").item(0).getTextContent(),
-          formatter);
-
-      // Resolution of the period in minutes
-      int interval = Integer.parseInt(
-          periodElement.getElementsByTagName("resolution").item(0)
-              .getTextContent().replaceAll("\\D", ""));
-
-      NodeList points = periodElement.getElementsByTagName("Point");
-      for (int j = 0; j < points.getLength(); j++) {
-        Element pointElement = (Element) points.item(j);
-        double usage = Double.parseDouble(pointElement.getElementsByTagName("quantity")
-            .item(0).getTextContent());
-        // Calculate the date of the price point based on the start date and interval
-        LocalDateTime date = startDate.plusMinutes((long) interval * (j - 1));
-
-        ApiData data = new ApiData();
-        data.usage = usage;
-        data.date = date;
-        data.interval = interval;
-        usageData.add(data);
-      }
-    }
-    return usageData;
+    return dataList;
 
   }
 
