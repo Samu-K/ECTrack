@@ -48,7 +48,7 @@ public class MainController {
    * 
    * @return List of electricity usage data
    */
-  public List<Double> fetchUsage(String country, String startDate, String endDate) {
+  public List<ApiData> fetchUsage(String country, String startDate, String endDate) {
     try {
       return apiService.fetchUsage(country, startDate, endDate);
     } catch (Exception e) {

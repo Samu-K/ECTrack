@@ -72,8 +72,7 @@ public class ApiServiceTest extends TestCase {
       String periodStart = "202401010000";
       String periodEnd = "202401310000";
 
-      List<Double> usageData = apiService.fetchUsage(country, periodStart, periodEnd);
-
+      List<ApiData> usageData = apiService.fetchUsage(country, periodStart, periodEnd);
       // Assert: Confirms usage data is not null or empty
       assertNotNull("Usage data shouldn't be null", usageData);
       assertFalse("Usage data shouldn't be empty", usageData.isEmpty());
