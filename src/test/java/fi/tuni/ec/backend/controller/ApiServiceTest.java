@@ -1,8 +1,8 @@
 package fi.tuni.ec.backend.controller;
 
-import java.util.List;
-
+import fi.tuni.ec.api.ApiData;
 import fi.tuni.ec.api.ApiService;
+import java.util.List;
 import junit.framework.TestCase;
 
 /**
@@ -52,12 +52,12 @@ public class ApiServiceTest extends TestCase {
       String periodStart = "202401010000";
       String periodEnd = "202401312300";
 
-      List<Double> pricingData = apiService.fetchPricing(country, periodStart, periodEnd);
-
+      List<ApiData> pricingData = apiService.fetchPricing(country, periodStart, periodEnd);
       // Assert: Confirms pricing data is not null or empty
       assertNotNull("Pricing data shouldn't be null", pricingData);
       assertFalse("Pricing data shouldn't be empty", pricingData.isEmpty());
     } catch (Exception e) {
+      e.printStackTrace();
       fail("fetchPricing threw an exception: " + e.getMessage());
     }
   }

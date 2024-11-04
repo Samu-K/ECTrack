@@ -1,11 +1,9 @@
 package fi.tuni.ec.backend.controller;
 
-import java.io.IOException;
-// import java.time.LocalDate;
-// import java.time.YearMonth;
-import java.util.List;
-
+import fi.tuni.ec.api.ApiData;
 import fi.tuni.ec.api.ApiService;
+import java.io.IOException;
+import java.util.List;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -70,7 +68,7 @@ public class MainController {
    * 
    * @return List of electricity pricing data
    */
-  public List<Double> fetchPricing(String country, String startDate, String endDate) {
+  public List<ApiData> fetchPricing(String country, String startDate, String endDate) {
     try {
       return apiService.fetchPricing(country, startDate, endDate);
     } catch (Exception e) {

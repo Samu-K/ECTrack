@@ -5,12 +5,15 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 
@@ -21,6 +24,8 @@ public class ApiService {
 
   private static final String API_URL = "https://web-api.tp.entsoe.eu/api";
   private static String apiKey;
+  private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
+      "yyyy-MM-dd'T'HH:mm'Z'");
 
   // Map for storing area (country) codes
   public static final Map<String, String> COUNTRY_CODES = Map.of(
@@ -32,8 +37,7 @@ public class ApiService {
 
   // Static block to load the API key from config.properties
   static {
-    try (InputStream input = ApiService.class.getClassLoader()
-        .getResourceAsStream("config.properties")) {
+    try (InputStream input = ApiService.class.getResourceAsStream("config.properties")) {
       Properties prop = new Properties();
       if (input == null) {
         throw new IOException("Could not find config.properties");
@@ -53,7 +57,7 @@ public class ApiService {
   /**
    * Fetch the electricity pricing data.
    */
-  public List<Double> fetchPricing(String country, String periodStart, String periodEnd)
+  public List<ApiData> fetchPricing(String country, String periodStart, String periodEnd)
       throws Exception {
     String areaDomain = COUNTRY_CODES.get(country);
     String query = String.format(
@@ -100,15 +104,47 @@ public class ApiService {
   /**
    * Parse pricing XML response into a list of doubles.
    */
-  private List<Double> parsePricingResponse(InputStream responseStream) throws Exception {
+  private List<ApiData> parsePricingResponse(InputStream responseStream) throws Exception {
     Document document = DocumentBuilderFactory.newInstance()
         .newDocumentBuilder().parse(responseStream);
-    NodeList priceNodes = document.getElementsByTagName("price.amount");
-    List<Double> prices = new ArrayList<>();
-    for (int i = 0; i < priceNodes.getLength(); i++) {
-      prices.add(Double.valueOf(priceNodes.item(i).getTextContent()));
+    List<ApiData> prices = new ArrayList<>();
+
+    // Define namespaces
+    document.getDocumentElement().normalize();
+
+    // Get Period nodes
+    NodeList periodList = document.getElementsByTagName("Period");
+    for (int i = 0; i < periodList.getLength(); i++) {
+      // First two nodes are metadata, the rest are price points
+      Element periodElement = (Element) periodList.item(i);
+
+      // Start date of the period
+      LocalDateTime startDate = LocalDateTime.parse(
+          periodElement.getElementsByTagName("start").item(0).getTextContent(),
+          formatter);
+
+      // Resolution of the period in minutes
+      int interval = Integer.parseInt(
+          periodElement.getElementsByTagName("resolution").item(0)
+              .getTextContent().replaceAll("\\D", ""));
+
+      NodeList points = periodElement.getElementsByTagName("Point");
+      for (int j = 0; j < points.getLength(); j++) {
+        Element pointElement = (Element) points.item(j);
+        double price = Double.parseDouble(pointElement.getElementsByTagName("price.amount")
+            .item(0).getTextContent());
+        // Calculate the date of the price point based on the start date and interval
+        LocalDateTime date = startDate.plusMinutes((long) interval * (j - 1));
+
+        ApiData data = new ApiData();
+        data.price = price;
+        data.date = date;
+        data.interval = interval;
+        prices.add(data);
+      }
     }
     return prices;
+
   }
 
   /**
