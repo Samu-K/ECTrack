@@ -1,5 +1,7 @@
 package fi.tuni.ec.backend.controller;
 
+import fi.tuni.ec.api.ApiData;
+import fi.tuni.ec.api.ApiService;
 import java.util.List;
 import junit.framework.TestCase;
 
@@ -44,39 +46,19 @@ public class ApiServiceTest extends TestCase {
   /**
    * Tests the fetchPricing method.
    */
-  public void testFetchPricing() {
+  public void testFetchData() {
     try {
       String country = "Finland";
       String periodStart = "202401010000";
       String periodEnd = "202401312300";
 
-      List<Double> pricingData = apiService.fetchPricing(country, periodStart, periodEnd);
-
+      List<ApiData> pricingData = apiService.fetchData(country, periodStart, periodEnd);
       // Assert: Confirms pricing data is not null or empty
-      assertNotNull("Pricing data shouldn't be null", pricingData);
-      assertFalse("Pricing data shouldn't be empty", pricingData.isEmpty());
+      assertNotNull("Data shouldn't be null", pricingData);
+      assertFalse("Data shouldn't be empty", pricingData.isEmpty());
     } catch (Exception e) {
-      fail("fetchPricing threw an exception: " + e.getMessage());
-    }
-  }
-
-  /**
-   * Tests the fetchUsage method.
-   */
-  public void testFetchUsage() {
-
-    try {
-      String country = "Finland";
-      String periodStart = "202401010000";
-      String periodEnd = "202401310000";
-
-      List<Double> usageData = apiService.fetchUsage(country, periodStart, periodEnd);
-
-      // Assert: Confirms usage data is not null or empty
-      assertNotNull("Usage data shouldn't be null", usageData);
-      assertFalse("Usage data shouldn't be empty", usageData.isEmpty());
-    } catch (Exception e) {
-      fail("fetchUsage threw an exception: " + e.getMessage());
+      e.printStackTrace();
+      fail("fetchData threw an exception: " + e.getMessage());
     }
   }
 }

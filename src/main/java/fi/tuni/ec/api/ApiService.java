@@ -1,16 +1,19 @@
-package fi.tuni.ec.backend.controller;
+package fi.tuni.ec.api;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 
@@ -21,12 +24,8 @@ public class ApiService {
 
   private static final String API_URL = "https://web-api.tp.entsoe.eu/api";
   private static String apiKey;
-
-  // Debugging line to print the location of config.properties
-  static {
-    System.out.println(ApiService.class.getClassLoader()
-        .getResource("fi/tuni/ec/backend/controller/config.properties"));
-  }
+  private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
+      "yyyy-MM-dd'T'HH:mm'Z'");
 
   // Map for storing area (country) codes
   public static final Map<String, String> COUNTRY_CODES = Map.of(
@@ -38,8 +37,7 @@ public class ApiService {
 
   // Static block to load the API key from config.properties
   static {
-    try (InputStream input = ApiService.class.getClassLoader()
-        .getResourceAsStream("fi/tuni/ec/backend/controller/config.properties")) {
+    try (InputStream input = ApiService.class.getResourceAsStream("config.properties")) {
       Properties prop = new Properties();
       if (input == null) {
         throw new IOException("Could not find config.properties");
@@ -57,79 +55,130 @@ public class ApiService {
   }
 
   /**
-   * Fetch the electricity pricing data.
+   * Get the response stream from the API.
+   *
+   * @param query The query string
+   *
+   * @return InputStream
+   * @throws Exception if an error occurs
    */
-  public List<Double> fetchPricing(String country, String periodStart, String periodEnd)
-      throws Exception {
-    String areaDomain = COUNTRY_CODES.get(country);
-    String query = String.format(
-        "?securityToken=%s&documentType=A44"
-        + "&processType=A16&in_Domain=%s&out_Domain=%s&periodStart=%s&periodEnd=%s",
-        getApiKey(), areaDomain, areaDomain, periodStart, periodEnd);
-    System.out.println("Query: " + query);
+  private InputStream getResponseStream(String query) throws Exception {
     URI uri = new URI(API_URL + query);
     URL url = uri.toURL();
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.setRequestMethod("GET");
 
     if (connection.getResponseCode() == 200) {
-      InputStream responseStream = connection.getInputStream();
-      return parsePricingResponse(responseStream);
+      return connection.getInputStream();
     } else {
       throw new IOException("Failed to fetch pricing data: HTTP " + connection.getResponseCode());
     }
   }
 
   /**
-   * Fetch electricity usage data.
+   * Fetch data from the API.
+   *
+   * @param country The country code
+   * @param periodStart The start date of the period
+   * @param periodEnd The end date of the period
+   *
+   * @return List of ApiData
+   *
+   * @throws Exception if an error occurs
    */
-  public List<Double> fetchUsage(String country, String periodStart, String periodEnd)
+  public List<ApiData> fetchData(String country, String periodStart, String periodEnd)
       throws Exception {
+    List<ApiData> dataList = new ArrayList<>();
+
     String areaDomain = COUNTRY_CODES.get(country);
-    String query = String.format(
+
+    String priceQuery = String.format(
+        "?securityToken=%s&documentType=A44"
+            + "&processType=A16&in_Domain=%s&out_Domain=%s&periodStart=%s&periodEnd=%s",
+        getApiKey(), areaDomain, areaDomain, periodStart, periodEnd);
+
+    String usageQuery = String.format(
         "?securityToken=%s&documentType=A65"
-        + "&processType=A16&outBiddingZone_Domain=%s&periodStart=%s&periodEnd=%s",
+            + "&processType=A16&outBiddingZone_Domain=%s&periodStart=%s&periodEnd=%s",
         getApiKey(), areaDomain, periodStart, periodEnd);
 
-    URI uri = new URI(API_URL + query);
-    URL url = uri.toURL();
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    connection.setRequestMethod("GET");
+    InputStream priceStream = getResponseStream(priceQuery);
+    InputStream usageStream = getResponseStream(usageQuery);
+    List<ApiData> priceData = parseResponse(priceStream, "price");
+    List<ApiData> usageData = parseResponse(usageStream, "usage");
+    priceStream.close();
+    usageStream.close();
 
-    if (connection.getResponseCode() == 200) {
-      InputStream responseStream = connection.getInputStream();
-      return parseUsageResponse(responseStream);
-    } else {
-      throw new IOException("Failed to fetch usage data: HTTP " + connection.getResponseCode());
+    // Combine the two lists
+    for (int i = 0; i < priceData.size(); i++) {
+      ApiData data = new ApiData();
+      data.price = priceData.get(i).price;
+      data.usage = usageData.get(i).usage;
+      data.date = priceData.get(i).date;
+      data.interval = priceData.get(i).interval;
+      dataList.add(data);
     }
+
+    return dataList;
   }
 
   /**
-   * Parse pricing XML response into a list of doubles.
+   * Parse response into a list of ApiData.
    */
-  private List<Double> parsePricingResponse(InputStream responseStream) throws Exception {
-    Document document = DocumentBuilderFactory.newInstance()
-        .newDocumentBuilder().parse(responseStream);
-    NodeList priceNodes = document.getElementsByTagName("price.amount");
-    List<Double> prices = new ArrayList<>();
-    for (int i = 0; i < priceNodes.getLength(); i++) {
-      prices.add(Double.valueOf(priceNodes.item(i).getTextContent()));
-    }
-    return prices;
-  }
+  private List<ApiData> parseResponse(InputStream responseStream, String type) throws Exception {
+    String dataString = switch (type) {
+      case "price" -> "price.amount";
+      case "usage" -> "quantity";
+      default -> throw new IllegalArgumentException("Invalid type: " + type);
+    };
 
-  /**
-   * Parse usage XML response into a list of doubles.
-   */
-  private List<Double> parseUsageResponse(InputStream responseStream) throws Exception {
     Document document = DocumentBuilderFactory.newInstance()
         .newDocumentBuilder().parse(responseStream);
-    NodeList priceNodes = document.getElementsByTagName("quantity");
-    List<Double> prices = new ArrayList<>();
-    for (int i = 0; i < priceNodes.getLength(); i++) {
-      prices.add(Double.valueOf(priceNodes.item(i).getTextContent()));
+    List<ApiData> dataList = new ArrayList<>();
+
+    // Define namespaces
+    document.getDocumentElement().normalize();
+
+    // Get Period nodes
+    NodeList periodList = document.getElementsByTagName("Period");
+    for (int i = 0; i < periodList.getLength(); i++) {
+      // First two nodes are metadata, the rest are price points
+      Element periodElement = (Element) periodList.item(i);
+
+      // Start date of the period
+      LocalDateTime startDate = LocalDateTime.parse(
+          periodElement.getElementsByTagName("start").item(0).getTextContent(),
+          formatter);
+
+      // Resolution of the period in minutes
+      int interval = Integer.parseInt(
+          periodElement.getElementsByTagName("resolution").item(0)
+              .getTextContent().replaceAll("\\D", ""));
+
+      // Get price points
+      NodeList points = periodElement.getElementsByTagName("Point");
+      for (int j = 0; j < points.getLength(); j++) {
+        Element pointElement = (Element) points.item(j);
+        double dataPoint = Double.parseDouble(pointElement.getElementsByTagName(dataString)
+            .item(0).getTextContent());
+
+        // Calculate the date of the price point based on the start date and interval
+        LocalDateTime date = startDate.plusMinutes((long) interval * (j - 1));
+
+        ApiData data = new ApiData();
+        switch (type) {
+          case "price" -> data.price = dataPoint;
+          case "usage" -> data.usage = dataPoint;
+          default -> throw new IllegalArgumentException("Invalid type: " + type);
+        }
+        data.date = date;
+        data.interval = interval;
+
+        dataList.add(data);
+      }
     }
-    return prices;
+    return dataList;
+
   }
 
   // /**

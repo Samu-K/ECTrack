@@ -1,8 +1,8 @@
 package fi.tuni.ec.backend.controller;
 
+import fi.tuni.ec.api.ApiData;
+import fi.tuni.ec.api.ApiService;
 import java.io.IOException;
-// import java.time.LocalDate;
-// import java.time.YearMonth;
 import java.util.List;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -38,7 +38,7 @@ public class MainController {
   }
 
   /**
-   * Fetch electricity usage for a country 
+   * Fetch electricity data for a country
    * (options atm: Finland, Germany, Sweden, France)
    * and time period.
 
@@ -46,36 +46,17 @@ public class MainController {
    * @param startDate The start date of the period (format: "YYYYMMDDHHMM")
    * @param endDate The end date of the period (format: "YYYYMMDDHHMM")
    * 
-   * @return List of electricity usage data
+   * @return List of electricity data
    */
-  public List<Double> fetchUsage(String country, String startDate, String endDate) {
+  public List<ApiData> fetchData(String country, String startDate, String endDate) {
     try {
-      return apiService.fetchUsage(country, startDate, endDate);
+      return apiService.fetchData(country, startDate, endDate);
     } catch (Exception e) {
       System.out.println("Error fetching usage data: " + e.getMessage());
       return null;
     }
   }
 
-  /**
-   * Fetch electricity pricing for a country 
-   * (options atm: Finland, Germany, Sweden, France)
-   * and time period.
-
-   * @param country The country code 
-   * @param startDate The start date of the period (format: "YYYYMMDDHHMM")
-   * @param endDate The end date of the period (format: "YYYYMMDDHHMM")
-   * 
-   * @return List of electricity pricing data
-   */
-  public List<Double> fetchPricing(String country, String startDate, String endDate) {
-    try {
-      return apiService.fetchPricing(country, startDate, endDate);
-    } catch (Exception e) {
-      System.out.println("Error fetching pricing data: " + e.getMessage());
-      return null;
-    }
-  }
 
   // /**
   //  * Handle the daily view (fetch data for a specific day).
