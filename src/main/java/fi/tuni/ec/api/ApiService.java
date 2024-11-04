@@ -55,55 +55,63 @@ public class ApiService {
   }
 
   /**
-   * Fetch the electricity pricing data.
+   * Fetch data from the API.
+   *
+   * @param country The country code
+   * @param periodStart The start date of the period
+   * @param periodEnd The end date of the period
+   *
+   * @return List of ApiData
+   *
+   * @throws Exception if an error occurs
    */
-  public List<ApiData> fetchPricing(String country, String periodStart, String periodEnd)
+  public List<ApiData> fetchData(String country, String periodStart, String periodEnd)
       throws Exception {
+    List<ApiData> dataList = new ArrayList<>();
     String areaDomain = COUNTRY_CODES.get(country);
-    String query = String.format(
+    String priceQuery = String.format(
         "?securityToken=%s&documentType=A44"
-        + "&processType=A16&in_Domain=%s&out_Domain=%s&periodStart=%s&periodEnd=%s",
+            + "&processType=A16&in_Domain=%s&out_Domain=%s&periodStart=%s&periodEnd=%s",
         getApiKey(), areaDomain, areaDomain, periodStart, periodEnd);
+    String usageQuery = String.format(
+        "?securityToken=%s&documentType=A65"
+            + "&processType=A16&outBiddingZone_Domain=%s&periodStart=%s&periodEnd=%s",
+        getApiKey(), areaDomain, periodStart, periodEnd);
+    InputStream priceStream = getResponseStream(priceQuery);
+    InputStream usageStream = getResponseStream(usageQuery);
+    List<ApiData> priceData = parseResponse(priceStream, "price");
+    List<ApiData> usageData = parseResponse(usageStream, "usage");
+    priceStream.close();
+    usageStream.close();
+
+    // Combine the two lists
+    for (int i = 0; i < priceData.size(); i++) {
+      ApiData data = new ApiData();
+      data.price = priceData.get(i).price;
+      data.usage = usageData.get(i).usage;
+      data.date = priceData.get(i).date;
+      data.interval = priceData.get(i).interval;
+      dataList.add(data);
+    }
+
+    return dataList;
+  }
+
+  private InputStream getResponseStream(String query) throws Exception {
     URI uri = new URI(API_URL + query);
     URL url = uri.toURL();
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.setRequestMethod("GET");
 
     if (connection.getResponseCode() == 200) {
-      InputStream responseStream = connection.getInputStream();
-      return parseResponse(responseStream, "price");
+      return connection.getInputStream();
     } else {
       throw new IOException("Failed to fetch pricing data: HTTP " + connection.getResponseCode());
     }
   }
 
   /**
-   * Fetch electricity usage data.
-   */
-  public List<ApiData> fetchUsage(String country, String periodStart, String periodEnd)
-      throws Exception {
-    String areaDomain = COUNTRY_CODES.get(country);
-    String query = String.format(
-        "?securityToken=%s&documentType=A65"
-        + "&processType=A16&outBiddingZone_Domain=%s&periodStart=%s&periodEnd=%s",
-        getApiKey(), areaDomain, periodStart, periodEnd);
-
-    URI uri = new URI(API_URL + query);
-    URL url = uri.toURL();
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    connection.setRequestMethod("GET");
-
-    if (connection.getResponseCode() == 200) {
-      InputStream responseStream = connection.getInputStream();
-      return parseResponse(responseStream, "usage");
-    } else {
-      throw new IOException("Failed to fetch usage data: HTTP " + connection.getResponseCode());
-    }
-  }
-
-
-  /**
-   * Parse usage XML response into a list of ApiData.
+   * Parse response into a list of ApiData.
    */
   private List<ApiData> parseResponse(InputStream responseStream, String type) throws Exception {
     String dataString = switch (type) {
@@ -144,7 +152,11 @@ public class ApiService {
         LocalDateTime date = startDate.plusMinutes((long) interval * (j - 1));
 
         ApiData data = new ApiData();
-        data.data = dataPoint;
+        switch (type) {
+          case "price" -> data.price = dataPoint;
+          case "usage" -> data.usage = dataPoint;
+          default -> throw new IllegalArgumentException("Invalid type: " + type);
+        }
         data.date = date;
         data.interval = interval;
 
