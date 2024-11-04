@@ -55,6 +55,27 @@ public class ApiService {
   }
 
   /**
+   * Get the response stream from the API.
+   *
+   * @param query The query string
+   *
+   * @return InputStream
+   * @throws Exception if an error occurs
+   */
+  private InputStream getResponseStream(String query) throws Exception {
+    URI uri = new URI(API_URL + query);
+    URL url = uri.toURL();
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    connection.setRequestMethod("GET");
+
+    if (connection.getResponseCode() == 200) {
+      return connection.getInputStream();
+    } else {
+      throw new IOException("Failed to fetch pricing data: HTTP " + connection.getResponseCode());
+    }
+  }
+
+  /**
    * Fetch data from the API.
    *
    * @param country The country code
@@ -68,15 +89,19 @@ public class ApiService {
   public List<ApiData> fetchData(String country, String periodStart, String periodEnd)
       throws Exception {
     List<ApiData> dataList = new ArrayList<>();
+
     String areaDomain = COUNTRY_CODES.get(country);
+
     String priceQuery = String.format(
         "?securityToken=%s&documentType=A44"
             + "&processType=A16&in_Domain=%s&out_Domain=%s&periodStart=%s&periodEnd=%s",
         getApiKey(), areaDomain, areaDomain, periodStart, periodEnd);
+
     String usageQuery = String.format(
         "?securityToken=%s&documentType=A65"
             + "&processType=A16&outBiddingZone_Domain=%s&periodStart=%s&periodEnd=%s",
         getApiKey(), areaDomain, periodStart, periodEnd);
+
     InputStream priceStream = getResponseStream(priceQuery);
     InputStream usageStream = getResponseStream(usageQuery);
     List<ApiData> priceData = parseResponse(priceStream, "price");
@@ -95,19 +120,6 @@ public class ApiService {
     }
 
     return dataList;
-  }
-
-  private InputStream getResponseStream(String query) throws Exception {
-    URI uri = new URI(API_URL + query);
-    URL url = uri.toURL();
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    connection.setRequestMethod("GET");
-
-    if (connection.getResponseCode() == 200) {
-      return connection.getInputStream();
-    } else {
-      throw new IOException("Failed to fetch pricing data: HTTP " + connection.getResponseCode());
-    }
   }
 
   /**
@@ -143,11 +155,13 @@ public class ApiService {
           periodElement.getElementsByTagName("resolution").item(0)
               .getTextContent().replaceAll("\\D", ""));
 
+      // Get price points
       NodeList points = periodElement.getElementsByTagName("Point");
       for (int j = 0; j < points.getLength(); j++) {
         Element pointElement = (Element) points.item(j);
         double dataPoint = Double.parseDouble(pointElement.getElementsByTagName(dataString)
             .item(0).getTextContent());
+
         // Calculate the date of the price point based on the start date and interval
         LocalDateTime date = startDate.plusMinutes((long) interval * (j - 1));
 
