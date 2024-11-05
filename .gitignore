@@ -8,6 +8,7 @@ target/
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.idea
 *.iws
 *.iml
 *.ipr
@@ -38,3 +39,4 @@ build/
 .DS_Store
 
 savedQueries.csv
+config.properties

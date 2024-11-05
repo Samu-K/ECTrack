@@ -1,8 +1,9 @@
 package fi.tuni.ec.backend.controller;
 
+import fi.tuni.ec.api.ApiData;
+import fi.tuni.ec.api.ApiService;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -37,22 +38,61 @@ public class MainController {
   }
 
   /**
-   * Method to fetch electricity pricing data from the API.
-   * For now just print the data in a nice format.
+   * Fetch electricity data for a country
+   * (options atm: Finland, Germany, Sweden, France)
+   * and time period.
+
+   * @param country The country code 
+   * @param startDate The start date of the period (format: "YYYYMMDDHHMM")
+   * @param endDate The end date of the period (format: "YYYYMMDDHHMM")
+   * 
+   * @return List of electricity data
    */
-  public void fetchData() {
-    String url = "https://api.porssisahko.net/v1/latest-prices.json";
+  public List<ApiData> fetchData(String country, String startDate, String endDate) {
     try {
-      // Fetch the data
-      List<Map<String, Object>> pricingData = apiService.fetchElectricityPricing(url);
-
-      // For now just print the data in a nice format
-      pricingData.forEach(System.out::println);
-
-    } catch (IOException e) {
-      System.out.println("Error fetching data: " + e.getMessage());
+      return apiService.fetchData(country, startDate, endDate);
+    } catch (Exception e) {
+      System.out.println("Error fetching usage data: " + e.getMessage());
+      return null;
     }
   }
+
+
+  // /**
+  //  * Handle the daily view (fetch data for a specific day).
+  //  */
+  // public void handleDailyView(LocalDate date, String country) {
+  //   try {
+  //     apiService.fetchDataForDay(country, date);
+  //   } catch (Exception e) {
+  //     System.out.println("Error fetching data for day: " + e.getMessage());
+  //   }
+  // }
+
+  // /**
+  //  * Handle the weekly view (fetch data for a specific week).
+  //  */
+  // public void handleWeeklyView(LocalDate startDate, String country) {
+  //   try {
+  //     apiService.fetchDataForWeek(country, startDate);
+  //   } catch (Exception e) {
+  //     System.out.println("Error fetching weekly data: " + e.getMessage());
+  //   }
+  // }
+
+  // /**
+  //  * Handle the monthly view (fetch data for a specific month).
+  //  */
+  // public void handleMonthlyView(YearMonth month, String country) {
+  //   try {
+  //     apiService.fetchDataForMonth(country, month);
+  //   } catch (Exception e) {
+  //     System.out.println("Error fetching monthly data: " + e.getMessage());
+  //   }
+  // }
+
+
+
 
   /**
    * Show the main page.
