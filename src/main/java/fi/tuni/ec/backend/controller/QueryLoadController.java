@@ -1,5 +1,6 @@
 package fi.tuni.ec.backend.controller;
 
+import java.util.HashMap;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -7,6 +8,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
+import javafx.util.Pair;
 
 /**
  * Controller for query load popup.
@@ -24,6 +26,53 @@ public class QueryLoadController {
   private TableColumn<Object, String> param;
 
   private String queryFileName;
+
+
+
+  /**
+   * Initializes the popup.
+   * Sets up the columns and adds hardcoded rows.
+   */
+  @FXML
+  public void initialize() {
+    // Set up the columns to use the ConfigFile class properties
+    name.setCellValueFactory(new PropertyValueFactory<>("name"));
+    mod.setCellValueFactory(new PropertyValueFactory<>("mod"));
+    param.setCellValueFactory(new PropertyValueFactory<>("param"));
+  }
+
+  /**
+   * Fills the table with queries.
+   *
+   * @param queries The queries to fill the table with.
+   */
+  public void fillQueryTable(HashMap<String, Pair<String, String>> queries) {
+    ObservableList<ConfigFile> configFiles = FXCollections.observableArrayList();
+    queries.forEach((k, v) -> configFiles.add(new ConfigFile(k, v.getKey(), v.getValue())));
+    tableView.setItems(configFiles);
+  }
+
+  /**
+   * Closes the popup.
+   *
+   */
+  public void closePopup() {
+    Stage stage = (Stage) tableView.getScene().getWindow();
+    stage.close();
+  }
+
+  /**
+   * Loads the query.
+   */
+  public void loadQuery() {
+    ConfigFile selectedFile = tableView.getSelectionModel().getSelectedItem();
+    queryFileName = selectedFile.getName();
+    closePopup();
+  }
+
+  public String getQueryName() {
+    return queryFileName;
+  }
 
   /**
    * Inner class for the TableView data.
@@ -60,47 +109,5 @@ public class QueryLoadController {
       return param;
     }
 
-  }
-
-  /**
-   * Initializes the popup.
-   * Sets up the columns and adds hardcoded rows.
-   */
-  @FXML
-  public void initialize() {
-    // Set up the columns to use the ConfigFile class properties
-    name.setCellValueFactory(new PropertyValueFactory<>("name"));
-    mod.setCellValueFactory(new PropertyValueFactory<>("mod"));
-    param.setCellValueFactory(new PropertyValueFactory<>("param"));
-
-    // Add hardcoded rows
-    ObservableList<ConfigFile> configFiles = FXCollections.observableArrayList(
-        new ConfigFile("ExampleConfig1", "11.2.2024", "param1"),
-        new ConfigFile("ExampleConfig2", "11.5.2024", "param2"),
-        new ConfigFile("ExampleConfig3", "11.3.2024", "param3")
-    );
-
-    // Set the items in the table
-    tableView.setItems(configFiles);
-  }
-
-  /**
-   * Closes the popup.
-   *
-   */
-  public void closePopup() {
-    Stage stage = (Stage) tableView.getScene().getWindow();
-    stage.close();
-  }
-
-  /**
-   * Loads the query.
-   */
-  public void loadQuery() {
-    System.out.println("TEST");
-  }
-
-  public String getQueryName() {
-    return queryFileName;
   }
 }

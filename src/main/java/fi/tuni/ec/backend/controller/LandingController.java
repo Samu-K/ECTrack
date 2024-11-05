@@ -4,6 +4,7 @@ import fi.tuni.ec.backend.QueryHandler;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -111,16 +112,7 @@ public class LandingController {
    */
   public void loadQueryOld() {
     //String name = queryNamePopup();
-    //ArrayList<String> query = queryHandler.loadQuery(name);
-    //if (query == null) {
-    //  queryNotfoundAlert.showAndWait();
-    //  return;
-    //}
-    // ArrayList third value is params in format country;region
-    //String country = query.get(2).split(";")[0];
-    //String region = query.get(2).split(";")[1];
-    //countryCb.setValue(country);
-    //regionCb.setValue(region);
+
   }
 
   /**
@@ -146,9 +138,24 @@ public class LandingController {
       e.printStackTrace();
     }
 
+    // fill queries
+    cr.fillQueryTable(queryHandler.getQueries());
+
     // show window
     popupStage.showAndWait();
-    String fileName = cr.getQueryName();
+
+    // load query
+    String name = cr.getQueryName();
+    ArrayList<String> query = queryHandler.loadQuery(name);
+    if (query == null) {
+      queryNotfoundAlert.showAndWait();
+      return;
+    }
+    // ArrayList third value is params in format country;region
+    String country = query.get(2).split(";")[0];
+    String region = query.get(2).split(";")[1];
+    countryCb.setValue(country);
+    regionCb.setValue(region);
   }
 
   /**
