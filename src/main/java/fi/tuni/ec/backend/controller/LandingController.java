@@ -1,17 +1,21 @@
 package fi.tuni.ec.backend.controller;
 
 import fi.tuni.ec.backend.QueryHandler;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.GridPane;
+import javafx.stage.Stage;
 
 /**
  * Controller for landing page.
@@ -26,6 +30,7 @@ public class LandingController {
   private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
   private final DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM");
   private final DateTimeFormatter yearFormatter = DateTimeFormatter.ofPattern("yyyy");
+  private static final QueryLoadController cr = new QueryLoadController();
 
   private final Alert invalidDateAlert = new Alert(
       Alert.AlertType.ERROR,
@@ -104,18 +109,46 @@ public class LandingController {
    * Gives popup to user to enter query name.
    *
    */
-  public void loadQuery() {
-    String name = queryNamePopup();
-    ArrayList<String> query = queryHandler.loadQuery(name);
-    if (query == null) {
-      queryNotfoundAlert.showAndWait();
-      return;
-    }
+  public void loadQueryOld() {
+    //String name = queryNamePopup();
+    //ArrayList<String> query = queryHandler.loadQuery(name);
+    //if (query == null) {
+    //  queryNotfoundAlert.showAndWait();
+    //  return;
+    //}
     // ArrayList third value is params in format country;region
-    String country = query.get(2).split(";")[0];
-    String region = query.get(2).split(";")[1];
-    countryCb.setValue(country);
-    regionCb.setValue(region);
+    //String country = query.get(2).split(";")[0];
+    //String region = query.get(2).split(";")[1];
+    //countryCb.setValue(country);
+    //regionCb.setValue(region);
+  }
+
+  /**
+   * Load query from handler.
+   * Gives popup to user to enter query name.
+   *
+   */
+  public void loadQuery() {
+    // setup stage for popup
+    Stage popupStage = new Stage();
+    FXMLLoader ld = new FXMLLoader();
+
+    // load fxml and set controller
+    ld.setLocation(cr.getClass().getResource("queryPopup.fxml"));
+    ld.setController(cr);
+
+    // load stage
+    try {
+      GridPane popGrid = ld.load();
+      Scene popupScene = new Scene(popGrid);
+      popupStage.setScene(popupScene);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    // show window
+    popupStage.showAndWait();
+    String fileName = cr.getQueryName();
   }
 
   /**
