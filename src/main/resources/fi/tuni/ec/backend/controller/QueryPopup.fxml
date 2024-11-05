@@ -1,28 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
 <?import javafx.geometry.Insets?>
 <GridPane fx:id="gridPane" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1">
-
     <padding>
         <Insets top="10" right="10" bottom="10" left="10"/>
     </padding>
 
     <!-- TableView for displaying tabular data -->
-    <TableView fx:id="tableView" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
+    <TableView fx:id="queryTable" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
         <columns>
             <TableColumn fx:id="name" text="Name"/>
-            <TableColumn fx:id="mod" text="Modified"/>
-            <TableColumn fx:id="param" text="Parameters"/>
+            <TableColumn fx:id="dateModified" text="Modified"/>
+            <TableColumn fx:id="params" text="Parameters"/>
         </columns>
     </TableView>
 
-    <!-- Close button for the popup -->
     <Button text="Close" GridPane.rowIndex="1" GridPane.columnIndex="1" onAction="#closePopup"/>
     <Button text="Load" GridPane.rowIndex="1" GridPane.columnIndex="2" onAction="#loadQuery"/>
 </GridPane>

@@ -28,10 +28,10 @@ public class LandingController {
   private DateState ds;
   private QueryHandler queryHandler;
 
+  private static final QueryLoadController cr = new QueryLoadController();
   private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
   private final DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM");
   private final DateTimeFormatter yearFormatter = DateTimeFormatter.ofPattern("yyyy");
-  private static final QueryLoadController cr = new QueryLoadController();
 
   private final Alert invalidDateAlert = new Alert(
       Alert.AlertType.ERROR,
@@ -106,21 +106,27 @@ public class LandingController {
   }
 
   /**
-   * Load query from handler.
-   * Gives popup to user to enter query name.
+   * Sets params for query to UI.
    *
+   * @param name Name of the query
    */
-  public void loadQueryOld() {
-    //String name = queryNamePopup();
-
+  private void setQueryParams(String name) {
+    ArrayList<String> query = queryHandler.loadQuery(name);
+    if (query == null) {
+      queryNotfoundAlert.showAndWait();
+      return;
+    }
+    // ArrayList third value is params in format country;region
+    String country = query.get(2).split(";")[0];
+    String region = query.get(2).split(";")[1];
+    countryCb.setValue(country);
+    regionCb.setValue(region);
   }
 
   /**
-   * Load query from handler.
-   * Gives popup to user to enter query name.
-   *
+   * Shows popup for loading queries.
    */
-  public void loadQuery() {
+  private void showQueryLoadPopup() {
     // setup stage for popup
     Stage popupStage = new Stage();
     FXMLLoader ld = new FXMLLoader();
@@ -143,19 +149,24 @@ public class LandingController {
 
     // show window
     popupStage.showAndWait();
+  }
 
-    // load query
+  /**
+   * Load query from handler.
+   * Gives popup to user to enter query name.
+   *
+   */
+  public void loadQuery() {
+    // let user select from saved queries
+    showQueryLoadPopup();
     String name = cr.getQueryName();
-    ArrayList<String> query = queryHandler.loadQuery(name);
-    if (query == null) {
-      queryNotfoundAlert.showAndWait();
+
+    if (name.isEmpty()) {
       return;
     }
-    // ArrayList third value is params in format country;region
-    String country = query.get(2).split(";")[0];
-    String region = query.get(2).split(";")[1];
-    countryCb.setValue(country);
-    regionCb.setValue(region);
+
+    // set params for search
+    setQueryParams(name);
   }
 
   /**
