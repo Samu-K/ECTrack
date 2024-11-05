@@ -131,6 +131,10 @@ public class QueryHandler {
     return null;
   }
 
+  public HashMap<String, Pair<String, String>> getQueries() {
+    return queries;
+  }
+
   public void deleteQuery(String name) {
     queries.remove(name);
   }
