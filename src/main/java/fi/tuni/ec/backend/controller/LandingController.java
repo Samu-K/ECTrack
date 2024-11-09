@@ -1,18 +1,29 @@
 package fi.tuni.ec.backend.controller;
 
+import fi.tuni.ec.api.ApiData;
+import fi.tuni.ec.api.ApiService;
 import fi.tuni.ec.backend.QueryHandler;
-import java.time.LocalDate;
+
+import java.io.IOException;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.format.TextStyle;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.chart.*;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
 
 /**
  * Controller for landing page.
@@ -28,6 +39,13 @@ public class LandingController {
   private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
   private final DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM");
   private final DateTimeFormatter yearFormatter = DateTimeFormatter.ofPattern("yyyy");
+
+  private NumberAxis lineYAxis = new NumberAxis();
+  private CategoryAxis lineXAxis = new CategoryAxis();
+  private LineChart<String, Number> lineChart = new LineChart<>(lineXAxis, lineYAxis);
+  private NumberAxis barYAxis = new NumberAxis();
+  private CategoryAxis barXAxis = new CategoryAxis();
+  private BarChart<String, Number> barChart = new BarChart<>(barXAxis, barYAxis);
 
   private final Alert invalidDateAlert = new Alert(
       Alert.AlertType.ERROR,
@@ -77,16 +95,17 @@ public class LandingController {
     // Take this from selected country after country selection implemented
     var country = "Finland";
 
-    // change this to selected date
-    var date = LocalDate.now();
-
     // Take these from selected dates
     var periodStart = date.format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
     var periodEnd = date.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
 
-    var priceData = fetchAndFormPriceData(country, periodStart, periodEnd);
+    var priceData = fetchAndFormData(country, periodStart, periodEnd);
 
-    createGraph(priceData, periodStart, periodEnd);
+    if (priceData != null) {
+      createGraph(priceData);
+    } else {
+      new Alert(Alert.AlertType.ERROR, "Error fetching data", ButtonType.OK);
+    }
   }
 
   /**
@@ -106,7 +125,6 @@ public class LandingController {
   /**
    * Save current query to handler.
    * Gives popup to user to enter query name.
-   *
    */
   public void saveQuery() {
     String country = countryCb.getValue();
@@ -165,7 +183,6 @@ public class LandingController {
   /**
    * Load query from handler.
    * Gives popup to user to enter query name.
-   *
    */
   public void loadQuery() {
     // let user select from saved queries
@@ -238,29 +255,59 @@ public class LandingController {
     }
   }
 
+  private void createGraph(List<ApiData> priceData) {
+    clearCharts();
+
+    updateDayGraph(priceData);
+  }
+
+  // Clear charts for clean update
+  private void clearCharts() {
+    graphPlaceholder.getChildren().clear();
+    graphPlaceholder2.getChildren().clear();
+
+    lineYAxis = new NumberAxis();
+    lineXAxis = new CategoryAxis();
+    barYAxis = new NumberAxis();
+    barXAxis = new CategoryAxis();
+
+    lineChart = new LineChart<>(lineXAxis, lineYAxis);
+    barChart = new BarChart<>(barXAxis, barYAxis);
+
+    lineYAxis.setLabel("€ / Kw");
+    lineChart.setTitle("Electricity Prices");
+    barYAxis.setLabel("kWh");
+    barChart.setTitle("Electricity Usage");
+    barChart.setCategoryGap(3);
+
+    lineChart.getStylesheets().add(getClass().getResource("landing.css").toExternalForm());
+    barChart.getStylesheets().add(getClass().getResource("landing.css").toExternalForm());
+
+    XYChart.Series<String, Number> priceSeries = new XYChart.Series<>();
+    XYChart.Series<String, Number> usageSeries = new XYChart.Series<>();
+    priceSeries.setName("Electricity Prices");
+    usageSeries.setName("Electricity Usage");
+
+    lineChart.getData().add(priceSeries);
+    barChart.getData().add(usageSeries);
+
+    graphPlaceholder.getChildren().add(lineChart);
+    graphPlaceholder2.getChildren().add(barChart);
+  }
+
   /**
    * Returns a list containing the start and end date of the week.
    *
    * @param date The date to calculate the week from
-   *
    * @return List containing the start and end date of the week
    */
   private List<LocalDate> getWeek(LocalDate date) {
-    // Gets the day of the week (in english)
-    DateTimeFormatter weekDayFormatter = DateTimeFormatter.ofPattern("E");
-    String weekDay = weekDayFormatter.format(date);
-    // This needs to be refactored to contain
-    // no magic numbers and hardcoded value
-    return switch (weekDay) {
-      case "Mon" -> List.of(date, date.plusDays(6));
-      case "Tue" -> List.of(date.minusDays(1), date.plusDays(5));
-      case "Wed" -> List.of(date.minusDays(2), date.plusDays(4));
-      case "Thu" -> List.of(date.minusDays(3), date.plusDays(3));
-      case "Fri" -> List.of(date.minusDays(4), date.plusDays(2));
-      case "Sat" -> List.of(date.minusDays(5), date.plusDays(1));
-      case "Sun" -> List.of(date.minusDays(6), date);
-      default -> null;
-    };
+    LocalDate startOfWeek = date.with(DayOfWeek.MONDAY);
+    List<LocalDate> week = new ArrayList<>();
+    for (int i = 0; i < 7; i++) {
+      week.add(startOfWeek.plusDays(i));
+    }
+    return week;
   }
 
   /**
@@ -272,8 +319,7 @@ public class LandingController {
   private String getWeekString(LocalDate date) {
     List<LocalDate> week = getWeek(date);
     try {
-      return week.get(0).format(dateFormatter) + " - "
-          + week.get(1).format(dateFormatter);
+      return week.getFirst().format(dateFormatter) + " - " + week.getLast().format(dateFormatter);
     } catch (NullPointerException e) {
       System.out.println("Error: Date null");
       return null;
@@ -284,7 +330,6 @@ public class LandingController {
    * Returns a list containing the start of the year and given date.
    *
    * @param date The date to calculate the year from
-   *
    * @return List containing the start of the year and given date
    */
   private List<LocalDate> getYtd(LocalDate date) {
@@ -311,7 +356,7 @@ public class LandingController {
   }
 
   @FXML
-  public  void setDateNext() {
+  public void setDateNext() {
     setDate(1);
   }
 
@@ -324,6 +369,8 @@ public class LandingController {
     ds = DateState.DAY;
     nextDateButton.setVisible(true);
     prevDateButton.setVisible(true);
+    clearCharts();
+    updateGraph();
   }
 
   /**
@@ -335,6 +382,8 @@ public class LandingController {
     ds = DateState.WEEK;
     nextDateButton.setVisible(true);
     prevDateButton.setVisible(true);
+    clearCharts();
+    updateGraph();
   }
 
   /**
@@ -346,6 +395,8 @@ public class LandingController {
     ds = DateState.MONTH;
     nextDateButton.setVisible(true);
     prevDateButton.setVisible(true);
+    clearCharts();
+    updateGraph();
   }
 
   /**
@@ -357,6 +408,8 @@ public class LandingController {
     ds = DateState.YEAR;
     nextDateButton.setVisible(true);
     prevDateButton.setVisible(true);
+    clearCharts();
+    updateGraph();
   }
 
   /**
@@ -368,14 +421,26 @@ public class LandingController {
     ds = DateState.YTD;
     nextDateButton.setVisible(false);
     prevDateButton.setVisible(false);
+    clearCharts();
+    updateGraph();
   }
 
   // Copied from MainController for now
-  private List<Double> fetchAndFormPriceData(String country, String periodStart, String periodEnd) {
+  private List<ApiData> fetchAndFormData(String country, String periodStart, String periodEnd) {
     try {
       var apiService = new ApiService();
 
-      return apiService.fetchPricing(country, periodStart, periodEnd);
+      var fetchedData = apiService.fetchData(country, periodStart, periodEnd);
+
+      // Ensure data fetched from api is really between the chosen period
+      // since api has returned data couple hours off from requested
+      var formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+      var startTime = LocalDateTime.parse(periodStart, formatter);
+      var endTime = LocalDateTime.parse(periodEnd, formatter);
+
+      return fetchedData.stream()
+          .filter(data -> !data.date.isBefore(startTime) && !data.date.isAfter(endTime))
+          .collect(Collectors.toList());
     } catch (IOException e) {
       System.out.println("Error fetching data: " + e.getMessage());
       return null;
@@ -383,40 +448,174 @@ public class LandingController {
       throw new RuntimeException(e);
     }
   }
-  private void createGraph(List<Double> priceData, String periodStart, String periodEnd) {
-    //customize: new NumberAxis(min value, max value, interval)
-    final var lineYAxis = new NumberAxis();
-    final var lineXAxis = new CategoryAxis();
-    final var lineChart = new LineChart<>(lineXAxis, lineYAxis);
-    lineYAxis.setLabel("€ / Kw");
-    lineChart.setTitle("Electricity Prices");
-    XYChart.Series<String, Number> priceSeries = new XYChart.Series<>();
-    priceSeries.setName("Electricity Prices");
 
-    final var barYAxis = new NumberAxis();
-    final var barXAxis = new CategoryAxis();
-    final var barChart = new BarChart<>(barXAxis, barYAxis);
-    barYAxis.setLabel("kWh");
-    barChart.setTitle("Electricity Usage");
-    barChart.setCategoryGap(5);
-    XYChart.Series<String, Number> usageSeries = new XYChart.Series<>();
-    usageSeries.setName("Electricity Usage");
+  private void updateGraph() {
+    var country = countryCb.getValue();
+    String periodStart, periodEnd;
 
+    switch (ds) {
+      case DAY -> {
+        periodStart = date.format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+        periodEnd = date.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
+      }
+      case WEEK -> {
+        List<LocalDate> week = getWeek(date);
+        periodStart = week.get(0).format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+        periodEnd = week.get(6).format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
+      }
+      case MONTH -> {
+        periodStart = date.withDayOfMonth(1).format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+        periodEnd = date.withDayOfMonth(date.lengthOfMonth()).format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
+      }
+      case YEAR -> {
+        periodStart = date.withDayOfYear(1).format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+        periodEnd = date.withDayOfYear(date.lengthOfYear()).format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
+      }
+      case YTD -> {
+        periodStart = date.withDayOfYear(1).format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+        periodEnd = date.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
+      }
+      default -> throw new IllegalStateException("Unexpected value: " + ds);
+    }
+    var priceData = fetchAndFormData(country, periodStart, periodEnd);
 
-    for (int dateTime = 0; dateTime < priceData.size(); dateTime++) {
-      priceSeries.getData().add(new XYChart.Data<>(String.valueOf(dateTime), priceData.get(dateTime)));
+    if (priceData != null) {
+      switch (ds) {
+        case DAY -> updateDayGraph(priceData);
+        case WEEK -> updateWeekGraph(priceData);
+        case MONTH -> updateMonthGraph(priceData);
+        case YEAR, YTD -> updateYearGraph(priceData);
+      }
+    } else {
+      new Alert(
+          Alert.AlertType.ERROR, "Error fetching data", ButtonType.OK);
+    }
+  }
 
-      //For now use priceData
-      usageSeries.getData().add(new XYChart.Data<>(String.valueOf(dateTime), priceData.get(dateTime)));
+  private void updateDayGraph(List<ApiData> priceData) {
+    updateGraphData(priceData, lineChart.getData().get(0), barChart.getData().get(0), "hour");
+  }
+
+  private void updateWeekGraph(List<ApiData> priceData) {
+    Map<LocalDate, List<ApiData>> groupByDate = priceData.stream()
+        .collect(Collectors.groupingBy(data -> data.date.toLocalDate()));
+
+    List<ApiData> dailyAverages = new ArrayList<>(getWeek(date).stream()
+        .map(weekDate -> {
+          var dailyData = groupByDate.getOrDefault(weekDate, Collections.emptyList());
+
+          var temp = new ApiData();
+
+          temp.date = weekDate.atStartOfDay();
+          temp.interval = 1440;
+
+          // If dates have no data or are in the future, replace with zero data. Otherwise, get avg
+          if (!dailyData.isEmpty()) {
+            temp.price = dailyData.stream()
+                .mapToDouble(data -> data.price)
+                .average()
+                .orElse(0.0);
+            temp.usage = dailyData.stream()
+                .mapToDouble(data -> data.usage)
+                .sum();
+          } else {
+            temp.price = 0.0;
+            temp.usage = 0.0;
+          }
+
+          return temp;
+        }).toList());
+
+    dailyAverages.sort(Comparator.comparing(apiData -> apiData.date));
+
+    updateGraphData(dailyAverages, lineChart.getData().get(0), barChart.getData().get(0), "day");
+
+  }
+
+  private void updateMonthGraph(List<ApiData> priceData) {
+    Map<Integer, List<ApiData>> groupByDay = priceData.stream()
+        .collect(Collectors.groupingBy(data -> data.date.getDayOfMonth()));
+
+    List<ApiData> dailyAverages = new ArrayList<>();
+
+    for (int day = 1; day <= date.lengthOfMonth(); day++) {
+      List<ApiData> dailyData = groupByDay.getOrDefault(day, new ArrayList<>());
+
+      var temp = new ApiData();
+
+      temp.date = LocalDateTime.of(date.getYear(), date.getMonth(), day, 0, 0);
+      temp.interval = 1440;
+
+      // If dates have no data or are in the future, replace with zero data. Otherwise, get avg
+      if (!dailyData.isEmpty()) {
+        temp.price = dailyData.stream().mapToDouble(data -> data.price).average().orElse(0);
+        temp.usage = dailyData.stream().mapToDouble(data -> data.usage).sum();
+      } else {
+        temp.price = 0;
+        temp.usage = 0;
+      }
+
+      dailyAverages.add(temp);
     }
 
-    lineChart.getStylesheets().add(getClass().getResource("landing.css").toExternalForm());
-    barChart.getStylesheets().add(getClass().getResource("landing.css").toExternalForm());
+    dailyAverages.sort(Comparator.comparing(apiData -> apiData.date));
 
-    lineChart.getData().add(priceSeries);
-    barChart.getData().add(usageSeries);
+    updateGraphData(dailyAverages, lineChart.getData().get(0), barChart.getData().get(0), "dayOfMonth");
+  }
 
-    graphPlaceholder.getChildren().add(lineChart);
-    graphPlaceholder2.getChildren().add(barChart);
+  private void updateYearGraph(List<ApiData> priceData) {
+    Map<Month, List<ApiData>> groupedByMonth = priceData.stream()
+        .collect(Collectors.groupingBy(data -> data.date.getMonth()));
+
+    List<ApiData> monthlyAverages = new ArrayList<>(Arrays.stream(Month.values())
+        .map(month -> {
+          List<ApiData> monthlyData = groupedByMonth.getOrDefault(month, new ArrayList<>());
+
+          var temp = new ApiData();
+          temp.date = LocalDateTime.of(date.getYear(), month, 1, 0, 0);
+
+          // If dates have no data or are in the future, replace with zero data
+          if (!monthlyData.isEmpty()) {
+            temp.price = monthlyData.stream().mapToDouble(data -> data.price).average().orElse(0);
+            temp.usage = monthlyData.stream().mapToDouble(data -> data.usage).sum();
+          } else {
+            temp.price = 0;
+            temp.usage = 0;
+          }
+
+          temp.interval = 1440 * month.length(date.isLeapYear());
+          return temp;
+        }).toList());
+
+    // Sort to ensure that graph displays data correctly
+    monthlyAverages.sort(Comparator.comparing(apiData -> apiData.date));
+
+    updateGraphData(monthlyAverages, lineChart.getData().get(0), barChart.getData().get(0), "month");
+
+  }
+
+  private void updateGraphData(List<ApiData> priceData, XYChart.Series<String, Number> priceSeries, XYChart.Series<String, Number> usageSeries, String periodType) {
+    priceSeries.getData().clear();
+    usageSeries.getData().clear();
+
+    for (var data : priceData) {
+      String xValue;
+      switch (periodType) {
+        case "hour" -> xValue = data.date.getHour() + ":00";
+        case "day" -> xValue = data.date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
+        case "dayOfMonth" -> xValue = String.valueOf(data.date.getDayOfMonth());
+        case "month" -> xValue = data.date.getMonth().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
+        default -> throw new IllegalArgumentException("Period type unexpected: " + periodType);
+      }
+      priceSeries.getData().add(new XYChart.Data<>(xValue, data.price));
+      usageSeries.getData().add(new XYChart.Data<>(xValue, data.usage));
+    }
+
+    /*
+    for (XYChart.Data<String, Number> data : usageSeries.getData()) {
+      System.out.println("Date: " + data.getXValue() + ", Usage: " + data.getYValue());
+    }
+    */
   }
 }
+
