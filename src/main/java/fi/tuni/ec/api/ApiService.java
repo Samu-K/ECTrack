@@ -110,7 +110,9 @@ public class ApiService {
     usageStream.close();
 
     // Combine the two lists
-    for (int i = 0; i < priceData.size(); i++) {
+    int len = Math.min(priceData.size(), usageData.size());
+
+    for (int i = 0; i < len; i++) {
       ApiData data = new ApiData();
       data.price = priceData.get(i).price;
       data.usage = usageData.get(i).usage;
