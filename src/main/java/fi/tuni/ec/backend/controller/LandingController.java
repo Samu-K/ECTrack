@@ -23,7 +23,7 @@ import javafx.stage.Stage;
  * Populates filter comboboxes, handles landing page navigation elements.
  */
 public class LandingController {
-  private LocalDate date;
+  private LocalDate dispDate;
   private LocalDate curDate;
   private DateState ds;
   private QueryHandler queryHandler;
@@ -64,8 +64,8 @@ public class LandingController {
   @FXML
   public void initialize() {
     curDate = LocalDate.now();
-    date = curDate;
-    dateLabel.setText(dateFormatter.format(date));
+    dispDate = curDate;
+    dateLabel.setText(dateFormatter.format(dispDate));
     ds = DateState.DAY;
     queryHandler = new QueryHandler();
 
@@ -94,7 +94,9 @@ public class LandingController {
    */
   public void saveQuery() {
     String country = countryCb.getValue();
-    String params = country + ";";
+    String dateType = ds.toString();
+
+    String params = country + ";" + dispDate + ";" + dateType;
     String name = queryNamePopup();
     queryHandler.saveQuery(name, curDate.toString(), params);
   }
@@ -112,7 +114,12 @@ public class LandingController {
     }
     // ArrayList third value is params in format country;region
     String country = query.get(2).split(";")[0];
+    String date =  query.get(2).split(";")[1];
+    String dateType = query.get(2).split(";")[2];
     countryCb.setValue(country);
+    dispDate = LocalDate.parse(date);
+    ds = DateState.valueOf(dateType);
+    setDispDate(0);
   }
 
   /**
@@ -166,51 +173,51 @@ public class LandingController {
    *
    * @param offSet Determines if date moves forward or backward
    */
-  private void setDate(int offSet) {
+  private void setDispDate(int offSet) {
     LocalDate newDate;
     switch (ds) {
       case DAY:
-        newDate = date.plusDays(offSet);
+        newDate = dispDate.plusDays(offSet);
         if (newDate.isAfter(curDate)) {
           invalidDateAlert.showAndWait();
         } else {
-          date = newDate;
+          dispDate = newDate;
         }
         showDate();
         break;
       case WEEK:
-        newDate = date.plusWeeks(offSet);
+        newDate = dispDate.plusWeeks(offSet);
         if (newDate.isAfter(curDate)) {
           invalidDateAlert.showAndWait();
         } else {
-          date = newDate;
+          dispDate = newDate;
         }
         showWeek();
         break;
       case MONTH:
-        newDate = date.plusMonths(offSet);
+        newDate = dispDate.plusMonths(offSet);
         if (newDate.isAfter(curDate)) {
           invalidDateAlert.showAndWait();
         } else {
-          date = newDate;
+          dispDate = newDate;
         }
         showMonth();
         break;
       case YEAR:
-        newDate = date.plusYears(offSet);
+        newDate = dispDate.plusYears(offSet);
         if (newDate.isAfter(curDate)) {
           invalidDateAlert.showAndWait();
         } else {
-          date = newDate;
+          dispDate = newDate;
         }
         showYear();
         break;
       case YTD:
-        newDate = date.plusYears(offSet);
+        newDate = dispDate.plusYears(offSet);
         if (newDate.isAfter(curDate)) {
           invalidDateAlert.showAndWait();
         } else {
-          date = newDate;
+          dispDate = newDate;
         }
         showYtd();
         break;
@@ -292,7 +299,7 @@ public class LandingController {
     */
   @FXML
   public void setDatePrev() {
-    setDate(-1);
+    setDispDate(-1);
   }
 
   /**
@@ -300,7 +307,7 @@ public class LandingController {
    */
   @FXML
   public  void setDateNext() {
-    setDate(1);
+    setDispDate(1);
   }
 
   /**
@@ -308,7 +315,7 @@ public class LandingController {
    */
   @FXML
   public void showDate() {
-    dateLabel.setText(dateFormatter.format(date));
+    dateLabel.setText(dateFormatter.format(dispDate));
     ds = DateState.DAY;
     nextDateButton.setVisible(true);
     prevDateButton.setVisible(true);
@@ -319,7 +326,7 @@ public class LandingController {
    */
   @FXML
   public void showWeek() {
-    dateLabel.setText(getWeekString(date));
+    dateLabel.setText(getWeekString(dispDate));
     ds = DateState.WEEK;
     nextDateButton.setVisible(true);
     prevDateButton.setVisible(true);
@@ -330,7 +337,7 @@ public class LandingController {
    */
   @FXML
   public void showMonth() {
-    dateLabel.setText(monthFormatter.format(date));
+    dateLabel.setText(monthFormatter.format(dispDate));
     ds = DateState.MONTH;
     nextDateButton.setVisible(true);
     prevDateButton.setVisible(true);
@@ -341,7 +348,7 @@ public class LandingController {
    */
   @FXML
   public void showYear() {
-    dateLabel.setText(yearFormatter.format(date));
+    dateLabel.setText(yearFormatter.format(dispDate));
     ds = DateState.YEAR;
     nextDateButton.setVisible(true);
     prevDateButton.setVisible(true);

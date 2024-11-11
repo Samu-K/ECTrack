@@ -12,9 +12,9 @@
     <!-- TableView for displaying tabular data -->
     <TableView fx:id="queryTable" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
         <columns>
-            <TableColumn fx:id="name" text="Name"/>
+            <TableColumn fx:id="name" text="Name" />
             <TableColumn fx:id="dateModified" text="Modified"/>
-            <TableColumn fx:id="params" text="Parameters"/>
+            <TableColumn fx:id="params" text="Parameters" minWidth="200"/>
         </columns>
     </TableView>
 
