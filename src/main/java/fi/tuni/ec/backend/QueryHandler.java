@@ -71,6 +71,8 @@ public class QueryHandler {
   public void saveQueryToFile(String name, Pair<String, String> query) {
     try {
       FileWriter writer = new FileWriter(queryFile, true);
+      // write query to file
+      // name, modified, params
       String line = name
           + "," + query.getKey()
           + "," + query.getValue() + "\n";
