@@ -42,8 +42,6 @@ public class LandingController {
       "Query not found",
       ButtonType.OK);
 
-  private static final List<String> REGIONS = List.of(
-      "Europe", "Asia", "Africa", "Americas", "Oceania");
   private static final List<String> ALL_COUNTRIES = List.of(
       "Finland", "Sweden", "Norway", "Denmark", "Iceland", "Estonia", "Latvia", "Lithuania"
   );
@@ -58,7 +56,6 @@ public class LandingController {
   @FXML Label dateLabel;
   @FXML Button prevDateButton;
   @FXML Button nextDateButton;
-  @FXML ComboBox<String> regionCb;
   @FXML ComboBox<String> countryCb;
 
   /**
@@ -72,8 +69,6 @@ public class LandingController {
     ds = DateState.DAY;
     queryHandler = new QueryHandler();
 
-    regionCb.getItems().addAll(REGIONS);
-    regionCb.getSelectionModel().selectFirst();
     countryCb.getItems().addAll(ALL_COUNTRIES);
     countryCb.getSelectionModel().selectFirst();
   }
@@ -99,8 +94,7 @@ public class LandingController {
    */
   public void saveQuery() {
     String country = countryCb.getValue();
-    String region = regionCb.getValue();
-    String params = country + ";" + region;
+    String params = country + ";";
     String name = queryNamePopup();
     queryHandler.saveQuery(name, curDate.toString(), params);
   }
@@ -118,9 +112,7 @@ public class LandingController {
     }
     // ArrayList third value is params in format country;region
     String country = query.get(2).split(";")[0];
-    String region = query.get(2).split(";")[1];
     countryCb.setValue(country);
-    regionCb.setValue(region);
   }
 
   /**
@@ -261,8 +253,9 @@ public class LandingController {
   private String getWeekString(LocalDate date) {
     List<LocalDate> week = getWeek(date);
     try {
-      return week.get(0).format(dateFormatter) + " - "
-          + week.get(1).format(dateFormatter);
+      assert week != null;
+      return week.getFirst().format(dateFormatter) + " - "
+          + week.getFirst().format(dateFormatter);
     } catch (NullPointerException e) {
       System.out.println("Error: Date null");
       return null;
@@ -294,11 +287,17 @@ public class LandingController {
         + ytd.get(1).format(dateFormatter);
   }
 
+  /**
+    * Sets date range to display as previous.
+    */
   @FXML
   public void setDatePrev() {
     setDate(-1);
   }
 
+  /**
+   * Sets date range to display as next.
+   */
   @FXML
   public  void setDateNext() {
     setDate(1);

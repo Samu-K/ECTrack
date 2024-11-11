@@ -27,8 +27,6 @@
     <left>
         <VBox prefWidth="150" spacing="20" style="-fx-background-color: #C0C0C0; -fx-padding: 20;">
             <Label text="Filters" style="-fx-font-size: 18px; -fx-text-fill: black;" alignment="TOP_CENTER" />
-            <Label text="Region" style="-fx-text-fill: black;" />
-            <ComboBox fx:id="regionCb" prefWidth="120" />
             <Label text="Country" style="-fx-text-fill: black;" />
             <ComboBox fx:id="countryCb" prefWidth="120" />
             <Region VBox.vgrow="ALWAYS" />
