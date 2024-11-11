@@ -112,14 +112,21 @@ public class LandingController {
       queryNotfoundAlert.showAndWait();
       return;
     }
-    // ArrayList third value is params in format country;region
-    String country = query.get(2).split(";")[0];
-    String date =  query.get(2).split(";")[1];
-    String dateType = query.get(2).split(";")[2];
+
+    // ArrayList third value is params in format country;date;dateType
+    String[] spl = query.get(2).split(";");
+
+    String country = spl[0];
     countryCb.setValue(country);
-    dispDate = LocalDate.parse(date);
-    ds = DateState.valueOf(dateType);
-    setDispDate(0);
+
+    // if date saved
+    if (spl.length > 1) {
+      String date =  spl[1];
+      String dateType = spl[2];
+      dispDate = LocalDate.parse(date);
+      ds = DateState.valueOf(dateType);
+      setDispDate(0);
+    }
   }
 
   /**

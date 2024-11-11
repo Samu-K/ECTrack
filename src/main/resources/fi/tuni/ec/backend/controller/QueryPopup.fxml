@@ -18,6 +18,7 @@
         </columns>
     </TableView>
 
-    <Button text="Close" GridPane.rowIndex="1" GridPane.columnIndex="1" onAction="#closePopup"/>
-    <Button text="Load" GridPane.rowIndex="1" GridPane.columnIndex="2" onAction="#loadQuery"/>
+    <Button text="Close" GridPane.rowIndex="1" GridPane.columnIndex="0" onAction="#closePopup"/>
+    <Button text="Load" GridPane.rowIndex="1" GridPane.columnIndex="1" onAction="#loadQuery"/>
+
 </GridPane>
