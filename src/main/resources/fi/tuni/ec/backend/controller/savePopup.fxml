@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<GridPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            prefHeight="150.0" prefWidth="200.0" >
+
+    <VBox>
+        <VBox alignment="TOP_CENTER">
+            <Label text="Save as:" alignment="TOP_CENTER"/>
+            <TextField fx:id="queryName" />
+        </VBox>
+        <VBox alignment="BOTTOM_LEFT">
+            <Button text="Save" onAction="#save" />
+            <CheckBox fx:id="saveTime" text="Save time?"/>
+        </VBox>
+    </VBox>
+</GridPane>
