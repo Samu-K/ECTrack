@@ -28,6 +28,7 @@ public class LandingController {
   private DateState ds;
   private QueryHandler queryHandler;
 
+  private static final SavePopup saveHandler = new SavePopup();
   private static final QueryLoadController cr = new QueryLoadController();
   private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
   private final DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM");
@@ -96,9 +97,16 @@ public class LandingController {
     String country = countryCb.getValue();
     String dateType = ds.toString();
 
-    String params = country + ";" + dispDate + ";" + dateType;
-    String name = queryNamePopup();
-    queryHandler.saveQuery(name, curDate.toString(), params);
+    // show popup for saving query
+    showQuerySave();
+
+    // setup params
+    String params = country;
+    if (saveHandler.getSaveTimeSelected()) {
+      params +=  ";" + dispDate + ";" + dateType;
+    }
+
+    queryHandler.saveQuery(saveHandler.getName(), curDate.toString(), params);
   }
 
   /**
@@ -127,6 +135,31 @@ public class LandingController {
       ds = DateState.valueOf(dateType);
       setDispDate(0);
     }
+  }
+
+  /**
+   * Shows popup for saving queries.
+   */
+  private void showQuerySave() {
+    // setup stage for popup
+    Stage popupStage = new Stage();
+    FXMLLoader ld = new FXMLLoader();
+
+    // load fxml and set controller
+    ld.setLocation(saveHandler.getClass().getResource("savePopup.fxml"));
+    ld.setController(saveHandler);
+
+    // load stage
+    try {
+      GridPane popGrid = ld.load();
+      Scene popupScene = new Scene(popGrid);
+      popupStage.setScene(popupScene);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    // show window
+    popupStage.showAndWait();
   }
 
   /**
