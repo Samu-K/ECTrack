@@ -474,6 +474,7 @@ public class LandingController {
     String country = countryCb.getValue();
     String periodStart;
     String periodEnd;
+    List<ApiData> priceData = new ArrayList<>();
 
     switch (ds) {
       case DAY -> {
@@ -503,7 +504,22 @@ public class LandingController {
       }
       default -> throw new IllegalStateException("Unexpected value: " + ds);
     }
-    var priceData = fetchAndFormData(country, periodStart, periodEnd);
+
+    // For year and ytd, split range into 3 month sequences
+    if (ds == DateState.YEAR || ds == DateState.YTD) {
+      List<String[]> periods = splitYearlyRange(periodStart, periodEnd);
+
+      for (String[] period : periods) {
+        periodStart = period[0];
+        periodEnd = period[1];
+        List<ApiData> chunkData = fetchAndFormData(country, periodStart, periodEnd);
+        if (chunkData != null) {
+          priceData.addAll(chunkData);
+        }
+      }
+    } else {
+      priceData = fetchAndFormData(country, periodStart, periodEnd);
+    }
 
     if (priceData != null) {
       switch (ds) {
@@ -519,6 +535,27 @@ public class LandingController {
       new Alert(
           Alert.AlertType.ERROR, "Error fetching data", ButtonType.OK);
     }
+  }
+
+  // Split year range into 3 months to avoid huge data fetches.
+  public static List<String[]> splitYearlyRange(String periodStart, String periodEnd) {
+    List<String[]> periods = new ArrayList<>();
+    var dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+    var start = LocalDate.parse(periodStart.substring(0, 8), dateFormatter);
+    var end = LocalDate.parse(periodEnd.substring(0, 8), dateFormatter);
+
+    while (start.isBefore(end)) {
+      var tempEnd = start.plusMonths(3).minusDays(1);
+
+      if (tempEnd.isAfter(end)) {
+        tempEnd = end;
+      }
+
+      periods.add(new String[]{start.format(dateFormatter) + "0000", tempEnd.format(dateFormatter) + "2300"});
+      start = tempEnd.plusDays(1);
+    }
+    return periods;
   }
 
   private void updateDayGraph(List<ApiData> priceData) {
