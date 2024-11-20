@@ -43,11 +43,12 @@ import javafx.stage.Stage;
  * Populates filter comboboxes, handles landing page navigation elements.
  */
 public class LandingController {
-  private LocalDate date;
+  private LocalDate dispDate;
   private LocalDate curDate;
   private DateState ds;
   private QueryHandler queryHandler;
 
+  private static final SavePopup saveHandler = new SavePopup();
   private static final QueryLoadController cr = new QueryLoadController();
   private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
   private final DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM");
@@ -69,8 +70,6 @@ public class LandingController {
       "Query not found",
       ButtonType.OK);
 
-  private static final List<String> REGIONS = List.of(
-      "Europe", "Asia", "Africa", "Americas", "Oceania");
   private static final List<String> ALL_COUNTRIES = List.of(
       "Finland", "Sweden", "Norway", "Denmark", "Iceland", "Estonia", "Latvia", "Lithuania"
   );
@@ -84,7 +83,6 @@ public class LandingController {
   @FXML Label dateLabel;
   @FXML Button prevDateButton;
   @FXML Button nextDateButton;
-  @FXML ComboBox<String> regionCb;
   @FXML ComboBox<String> countryCb;
   @FXML private StackPane graphPlaceholder;
   @FXML private StackPane graphPlaceholder2;
@@ -95,13 +93,11 @@ public class LandingController {
   @FXML
   public void initialize() {
     curDate = LocalDate.now();
-    date = curDate;
-    dateLabel.setText(dateFormatter.format(date));
+    dispDate = curDate;
+    dateLabel.setText(dateFormatter.format(dispDate));
     ds = DateState.DAY;
     queryHandler = new QueryHandler();
 
-    regionCb.getItems().addAll(REGIONS);
-    regionCb.getSelectionModel().selectFirst();
     countryCb.getItems().addAll(ALL_COUNTRIES);
     countryCb.getSelectionModel().selectFirst();
 
@@ -141,10 +137,18 @@ public class LandingController {
    */
   public void saveQuery() {
     String country = countryCb.getValue();
-    String region = regionCb.getValue();
-    String params = country + ";" + region;
-    String name = queryNamePopup();
-    queryHandler.saveQuery(name, curDate.toString(), params);
+    String dateType = ds.toString();
+
+    // show popup for saving query
+    showQuerySave();
+
+    // setup params
+    String params = country;
+    if (saveHandler.getSaveTimeSelected()) {
+      params +=  ";" + dispDate + ";" + dateType;
+    }
+
+    queryHandler.saveQuery(saveHandler.getName(), curDate.toString(), params);
   }
 
   /**
@@ -158,11 +162,46 @@ public class LandingController {
       queryNotfoundAlert.showAndWait();
       return;
     }
-    // ArrayList third value is params in format country;region
-    String country = query.get(2).split(";")[0];
-    String region = query.get(2).split(";")[1];
+
+    // ArrayList third value is params in format country;date;dateType
+    String[] spl = query.get(2).split(";");
+
+    String country = spl[0];
     countryCb.setValue(country);
-    regionCb.setValue(region);
+
+    // if date saved
+    if (spl.length > 1) {
+      String date =  spl[1];
+      String dateType = spl[2];
+      dispDate = LocalDate.parse(date);
+      ds = DateState.valueOf(dateType);
+      setDispDate(0);
+    }
+  }
+
+  /**
+   * Shows popup for saving queries.
+   */
+  private void showQuerySave() {
+    // setup stage for popup
+    Stage popupStage = new Stage();
+    FXMLLoader ld = new FXMLLoader();
+
+    // load fxml and set controller
+    ld.setLocation(saveHandler.getClass().getResource("savePopup.fxml"));
+    ld.setController(saveHandler);
+
+    // load stage
+    try {
+      GridPane popGrid = ld.load();
+      Scene popupScene = new Scene(popGrid);
+      popupStage.setScene(popupScene);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    // show window
+    popupStage.showAndWait();
   }
 
   /**
@@ -215,51 +254,51 @@ public class LandingController {
    *
    * @param offSet Determines if date moves forward or backward
    */
-  private void setDate(int offSet) {
+  private void setDispDate(int offSet) {
     LocalDate newDate;
     switch (ds) {
       case DAY:
-        newDate = date.plusDays(offSet);
+        newDate = dispDate.plusDays(offSet);
         if (newDate.isAfter(curDate)) {
           invalidDateAlert.showAndWait();
         } else {
-          date = newDate;
+          dispDate = newDate;
         }
         showDate();
         break;
       case WEEK:
-        newDate = date.plusWeeks(offSet);
+        newDate = dispDate.plusWeeks(offSet);
         if (newDate.isAfter(curDate)) {
           invalidDateAlert.showAndWait();
         } else {
-          date = newDate;
+          dispDate = newDate;
         }
         showWeek();
         break;
       case MONTH:
-        newDate = date.plusMonths(offSet);
+        newDate = dispDate.plusMonths(offSet);
         if (newDate.isAfter(curDate)) {
           invalidDateAlert.showAndWait();
         } else {
-          date = newDate;
+          dispDate = newDate;
         }
         showMonth();
         break;
       case YEAR:
-        newDate = date.plusYears(offSet);
+        newDate = dispDate.plusYears(offSet);
         if (newDate.isAfter(curDate)) {
           invalidDateAlert.showAndWait();
         } else {
-          date = newDate;
+          dispDate = newDate;
         }
         showYear();
         break;
       case YTD:
-        newDate = date.plusYears(offSet);
+        newDate = dispDate.plusYears(offSet);
         if (newDate.isAfter(curDate)) {
           invalidDateAlert.showAndWait();
         } else {
-          date = newDate;
+          dispDate = newDate;
         }
         showYtd();
         break;
@@ -334,7 +373,9 @@ public class LandingController {
   private String getWeekString(LocalDate date) {
     List<LocalDate> week = getWeek(date);
     try {
-      return week.getFirst().format(dateFormatter) + " - " + week.getLast().format(dateFormatter);
+      assert week != null;
+      return week.getFirst().format(dateFormatter) + " - "
+          + week.getFirst().format(dateFormatter);
     } catch (NullPointerException e) {
       System.out.println("Error: Date null");
       return null;
@@ -366,19 +407,20 @@ public class LandingController {
   }
 
   /**
-   * Moves date range to previous or next date range.
-   */
+    * Sets date range to display as previous.
+    */
   @FXML
   public void setDatePrev() {
-    setDate(-1);
+    setDispDate(-1);
   }
 
   /**
-   * Moves date range to next date range.
+
+   * Sets date range to display as next.
    */
   @FXML
-  public void setDateNext() {
-    setDate(1);
+  public  void setDateNext() {
+    setDispDate(1);
   }
 
   /**
@@ -386,7 +428,7 @@ public class LandingController {
    */
   @FXML
   public void showDate() {
-    dateLabel.setText(dateFormatter.format(date));
+    dateLabel.setText(dateFormatter.format(dispDate));
     ds = DateState.DAY;
     nextDateButton.setVisible(true);
     prevDateButton.setVisible(true);
@@ -399,7 +441,7 @@ public class LandingController {
    */
   @FXML
   public void showWeek() {
-    dateLabel.setText(getWeekString(date));
+    dateLabel.setText(getWeekString(dispDate));
     ds = DateState.WEEK;
     nextDateButton.setVisible(true);
     prevDateButton.setVisible(true);
@@ -412,7 +454,7 @@ public class LandingController {
    */
   @FXML
   public void showMonth() {
-    dateLabel.setText(monthFormatter.format(date));
+    dateLabel.setText(monthFormatter.format(dispDate));
     ds = DateState.MONTH;
     nextDateButton.setVisible(true);
     prevDateButton.setVisible(true);
@@ -425,7 +467,7 @@ public class LandingController {
    */
   @FXML
   public void showYear() {
-    dateLabel.setText(yearFormatter.format(date));
+    dateLabel.setText(yearFormatter.format(dispDate));
     ds = DateState.YEAR;
     nextDateButton.setVisible(true);
     prevDateButton.setVisible(true);
