@@ -75,5 +75,22 @@ public class MainControllerTest extends TestCase {
     List<ApiData> data = mainController.fetchData(country, startDate, endDate);
     assertNull("Data should be null for an invalid date range.", data);
   }
+
+  /**
+   * Tests that the main page loads properly without errors.
+   */
+  public void testShowMainPage() {
+    try {
+      mainController.showMainPage();
+      // Makes sure the stage has a scene
+      assertNotNull("The primary stage should have a scene.", stage.getScene());
+      // Makes sure the scene has elements in it
+      assertNotNull("The scene should not be empty.", stage.getScene().getRoot());
+      // Makes sure the window is showing and UI is loaded
+      assertTrue("The page should be showing after showing main page.", stage.isShowing());
+    } catch (Exception e) {
+      fail("showMainPage should not throw an exception.");
+    }
+  }
 }
 
