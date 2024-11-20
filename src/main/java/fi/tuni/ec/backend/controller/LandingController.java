@@ -105,8 +105,8 @@ public class LandingController {
     var country = "Finland";
 
     // Take these from selected dates
-    var periodStart = date.format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
-    var periodEnd = date.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
+    var periodStart = dispDate.format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+    var periodEnd = dispDate.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
 
     var priceData = fetchAndFormData(country, periodStart, periodEnd);
 
@@ -520,29 +520,29 @@ public class LandingController {
 
     switch (ds) {
       case DAY -> {
-        periodStart = date.format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
-        periodEnd = date.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
+        periodStart = dispDate.format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+        periodEnd = dispDate.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
       }
       case WEEK -> {
-        List<LocalDate> week = getWeek(date);
+        List<LocalDate> week = getWeek(dispDate);
         periodStart = week.get(0).format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
         periodEnd = week.get(6).format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
       }
       case MONTH -> {
-        periodStart = date.withDayOfMonth(1).format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
-        periodEnd = date.withDayOfMonth(
-            date.lengthOfMonth()).format(DateTimeFormatter.ofPattern("yyyyMMdd2300")
+        periodStart = dispDate.withDayOfMonth(1).format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+        periodEnd = dispDate.withDayOfMonth(
+            dispDate.lengthOfMonth()).format(DateTimeFormatter.ofPattern("yyyyMMdd2300")
         );
       }
       case YEAR -> {
-        periodStart = date.withDayOfYear(1).format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
-        periodEnd = date.withDayOfYear(
-            date.lengthOfYear()).format(DateTimeFormatter.ofPattern("yyyyMMdd2300")
+        periodStart = dispDate.withDayOfYear(1).format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+        periodEnd = dispDate.withDayOfYear(
+            dispDate.lengthOfYear()).format(DateTimeFormatter.ofPattern("yyyyMMdd2300")
         );
       }
       case YTD -> {
-        periodStart = date.withDayOfYear(1).format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
-        periodEnd = date.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
+        periodStart = dispDate.withDayOfYear(1).format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+        periodEnd = dispDate.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
       }
       default -> throw new IllegalStateException("Unexpected value: " + ds);
     }
@@ -612,7 +612,7 @@ public class LandingController {
     Map<LocalDate, List<ApiData>> groupByDate = priceData.stream()
         .collect(Collectors.groupingBy(data -> data.date.toLocalDate()));
 
-    List<ApiData> dailyAverages = new ArrayList<>(getWeek(date).stream()
+    List<ApiData> dailyAverages = new ArrayList<>(getWeek(dispDate).stream()
         .map(weekDate -> {
           var dailyData = groupByDate.getOrDefault(weekDate, Collections.emptyList());
 
@@ -654,12 +654,12 @@ public class LandingController {
 
     List<ApiData> dailyAverages = new ArrayList<>();
 
-    for (int day = 1; day <= date.lengthOfMonth(); day++) {
+    for (int day = 1; day <= dispDate.lengthOfMonth(); day++) {
       List<ApiData> dailyData = groupByDay.getOrDefault(day, new ArrayList<>());
 
       var temp = new ApiData();
 
-      temp.date = LocalDateTime.of(date.getYear(), date.getMonth(), day, 0, 0);
+      temp.date = LocalDateTime.of(dispDate.getYear(), dispDate.getMonth(), day, 0, 0);
       temp.interval = 1440;
 
       // If dates have no data or are in the future, replace with zero data. Otherwise, get avg
@@ -696,12 +696,12 @@ public class LandingController {
           List<ApiData> monthlyData = groupedByMonth.getOrDefault(month, new ArrayList<>());
 
           var temp = new ApiData();
-          temp.date = LocalDateTime.of(date.getYear(), month, 1, 0, 0);
+          temp.date = LocalDateTime.of(dispDate.getYear(), month, 1, 0, 0);
 
           // If dates have no data or are in the future, replace with zero data
           setNullToZero(monthlyData, temp);
 
-          temp.interval = 1440 * month.length(date.isLeapYear());
+          temp.interval = 1440 * month.length(dispDate.isLeapYear());
           return temp;
         }).toList());
 
