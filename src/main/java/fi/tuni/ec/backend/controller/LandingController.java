@@ -520,29 +520,37 @@ public class LandingController {
 
     switch (ds) {
       case DAY -> {
-        periodStart = dispDate.format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
-        periodEnd = dispDate.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
+        periodStart = dispDate.format(
+            DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+        periodEnd = dispDate.format(
+            DateTimeFormatter.ofPattern("yyyyMMdd2300"));
       }
       case WEEK -> {
         List<LocalDate> week = getWeek(dispDate);
-        periodStart = week.get(0).format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
-        periodEnd = week.get(6).format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
+        periodStart = week.get(0).format(
+            DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+        periodEnd = week.get(6).format(
+            DateTimeFormatter.ofPattern("yyyyMMdd2300"));
       }
       case MONTH -> {
-        periodStart = dispDate.withDayOfMonth(1).format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
-        periodEnd = dispDate.withDayOfMonth(
-            dispDate.lengthOfMonth()).format(DateTimeFormatter.ofPattern("yyyyMMdd2300")
+        periodStart = dispDate.withDayOfMonth(1).format(
+            DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+        periodEnd = dispDate.withDayOfMonth(dispDate.lengthOfMonth()).format(
+            DateTimeFormatter.ofPattern("yyyyMMdd2300")
         );
       }
       case YEAR -> {
-        periodStart = dispDate.withDayOfYear(1).format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
-        periodEnd = dispDate.withDayOfYear(
-            dispDate.lengthOfYear()).format(DateTimeFormatter.ofPattern("yyyyMMdd2300")
+        periodStart = dispDate.withDayOfYear(1).format(
+            DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+        periodEnd = dispDate.withDayOfYear(dispDate.lengthOfYear()).format(
+            DateTimeFormatter.ofPattern("yyyyMMdd2300")
         );
       }
       case YTD -> {
-        periodStart = dispDate.withDayOfYear(1).format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
-        periodEnd = dispDate.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
+        periodStart = dispDate.withDayOfYear(1).format(
+            DateTimeFormatter.ofPattern("yyyyMMdd0000"));
+        periodEnd = dispDate.format(
+            DateTimeFormatter.ofPattern("yyyyMMdd2300"));
       }
       default -> throw new IllegalStateException("Unexpected value: " + ds);
     }
@@ -580,6 +588,14 @@ public class LandingController {
   }
 
   // Split year range into 3 months to avoid huge data fetches.
+
+  /**
+   * Split year into 3 months to avoid API limit.
+   *
+   * @param periodStart Start of the period
+   * @param periodEnd End of the period
+   * @return list of individual periods
+   */
   public static List<String[]> splitYearlyRange(String periodStart, String periodEnd) {
     List<String[]> periods = new ArrayList<>();
     var dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -594,7 +610,12 @@ public class LandingController {
         tempEnd = end;
       }
 
-      periods.add(new String[]{start.format(dateFormatter) + "0000", tempEnd.format(dateFormatter) + "2300"});
+      periods.add(
+          new String[]{
+              start.format(dateFormatter) + "0000",
+              tempEnd.format(dateFormatter) + "2300"
+          });
+
       start = tempEnd.plusDays(1);
     }
     return periods;
