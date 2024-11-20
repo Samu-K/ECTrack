@@ -13,28 +13,25 @@ import junit.framework.TestCase;
 public class MainControllerTest extends TestCase {
 
   private static boolean isJavaFXInitialized = false;
-  private MainController mainController;
-  private Stage stage;
+  private static MainController mainController;
+  private static Stage stage;
 
   /**
-   * Sets up an instance of mainController for each test.
+   * Sets up an instance of mainController and stage for each test.
    */
   protected void setUp() throws Exception {
-    // Initialize JavaFX for tests once.
+    // Initialize JavaFX for tests only once to prevent multiple windows opening and
+    // taking up unnecessary resources
     if (!isJavaFXInitialized) {
       final CountDownLatch latch = new CountDownLatch(1);
-      Platform.startup(() -> latch.countDown());
+      Platform.startup(() -> {
+        stage = new Stage();
+        mainController = new MainController(stage);
+        latch.countDown();
+      });
       latch.await();
       isJavaFXInitialized = true;
     }
-    // Initialize stage and mainController for tests.
-    final CountDownLatch setupLatch = new CountDownLatch(1);
-    Platform.runLater(() -> {
-      stage = new Stage();
-      mainController = new MainController(stage);
-      setupLatch.countDown();
-    });
-    setupLatch.await();
   }
 
   /**
@@ -80,16 +77,26 @@ public class MainControllerTest extends TestCase {
    * Tests that the main page loads properly without errors.
    */
   public void testShowMainPage() {
+    final CountDownLatch latch = new CountDownLatch(1);
+    Platform.runLater(() -> {
+      try {
+        mainController.showMainPage();
+        // Makes sure the stage has a scene
+        assertNotNull("The primary stage should have a scene.", stage.getScene());
+        // Makes sure the scene has elements in it
+        assertNotNull("The scene should not be empty.", stage.getScene().getRoot());
+        // Makes sure the window is showing and UI is loaded
+        assertTrue("The page should be showing after showing main page.", stage.isShowing());
+      } catch (Exception e) {
+        fail("showMainPage should not throw an exception.");
+      } finally {
+        latch.countDown();
+      }
+    });
     try {
-      mainController.showMainPage();
-      // Makes sure the stage has a scene
-      assertNotNull("The primary stage should have a scene.", stage.getScene());
-      // Makes sure the scene has elements in it
-      assertNotNull("The scene should not be empty.", stage.getScene().getRoot());
-      // Makes sure the window is showing and UI is loaded
-      assertTrue("The page should be showing after showing main page.", stage.isShowing());
-    } catch (Exception e) {
-      fail("showMainPage should not throw an exception.");
+      latch.await();
+    } catch (InterruptedException e) {
+      fail("Test interrupted.");
     }
   }
 }
