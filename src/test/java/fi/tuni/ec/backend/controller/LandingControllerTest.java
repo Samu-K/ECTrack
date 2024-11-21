@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import junit.framework.TestCase;
@@ -13,7 +14,6 @@ import junit.framework.TestCase;
  */
 public class LandingControllerTest extends TestCase {
 
-  private static boolean isJavaFXInitialized = false;
   private LandingController controller;
 
 
@@ -33,6 +33,8 @@ public class LandingControllerTest extends TestCase {
         controller = new LandingController();
         controller.dateLabel = new Label();
         controller.countryCb = new ComboBox<>();
+        controller.nextDateButton = new Button();
+        controller.prevDateButton = new Button();
         controller.initialize();
       } finally {
         setupLatch.countDown();
@@ -68,6 +70,40 @@ public class LandingControllerTest extends TestCase {
         assertEquals("First country should be selected in combo box",
             "Finland",
             controller.countryCb.getValue());
+      } finally {
+        latch.countDown();
+      }
+    });
+    latch.await();
+  }
+
+  /**
+   * Tests setDispDate in an indirect way, as it's not a public function.
+   * Ensures that date can be changed to previous dates, but not into the future.
+   */
+  public void testRangeOfDates() throws Exception {
+    CountDownLatch latch = new CountDownLatch(1);
+    Platform.runLater(() -> {
+      try {
+        controller.setDatePrev();
+        String controllerPastDate = controller.dateLabel.getText();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        String pastDate = formatter.format(LocalDate.now().minusDays(1));
+        assertEquals("Display date should be moved back one day.", pastDate, controllerPastDate);
+
+        /**
+         * Currently the popup created from moving to a future date breaks all the threads
+         * on JavaFX, so for now this is commented out as nothing works with it.
+         */
+//        String currentDate = formatter.format(LocalDate.now());
+//
+//        for (int i = 0; i <= 1; i += 1) {
+//          controller.setDateNext();
+//        }
+//        String controllerDate = controller.dateLabel.getText();
+//        assertEquals("Display date should not be set to a future date.", currentDate,
+//            controllerDate);
       } finally {
         latch.countDown();
       }

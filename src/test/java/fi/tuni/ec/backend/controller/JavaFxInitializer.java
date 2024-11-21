@@ -6,6 +6,9 @@ import javafx.application.Platform;
 
 /**
  * Shared JavaFX initializer for all test classes.
+ * Created due to multiple test classes requiring initialization of JFX toolkit,
+ * but running into IllegalStateException errors as toolkit was initialized multiple times
+ * when executing all tests, as JFX was initialized separately in each test class.
  */
 public class JavaFxInitializer {
 
