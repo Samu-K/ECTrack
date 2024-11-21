@@ -38,7 +38,7 @@ public class MainControllerTest extends TestCase {
    * Tests fetching data with valid inputs.
    */
   public void testFetchDataWithValidInputs() {
-    // All parameters should be valid
+    // All parameters are valid
     String country = "Finland";
     String startDate = "202401010000";
     String endDate = "202401312300";
@@ -81,11 +81,11 @@ public class MainControllerTest extends TestCase {
     Platform.runLater(() -> {
       try {
         mainController.showMainPage();
-        // Makes sure the stage has a scene
+        // Assert: Stage has a scene
         assertNotNull("The primary stage should have a scene.", stage.getScene());
-        // Makes sure the scene has elements in it
+        // Assert: The scene has elements in it
         assertNotNull("The scene should not be empty.", stage.getScene().getRoot());
-        // Makes sure the window is showing and UI is loaded
+        // Assert: The window is showing and UI is loaded
         assertTrue("The page should be showing after showing main page.", stage.isShowing());
       } catch (Exception e) {
         fail("showMainPage should not throw an exception.");
