@@ -12,7 +12,7 @@ import junit.framework.TestCase;
  */
 public class MainControllerTest extends TestCase {
 
-  private static boolean isJavaFXInitialized = false;
+  private static boolean isControllerInitialized = false;
   private static MainController mainController;
   private static Stage stage;
 
@@ -20,17 +20,22 @@ public class MainControllerTest extends TestCase {
    * Sets up an instance of mainController and stage for each test.
    */
   protected void setUp() throws Exception {
-    // Initialize JavaFX for tests only once to prevent multiple windows opening and
+    super.setUp();
+    // Initialize stage and controller for tests only once to prevent multiple windows opening and
     // taking up unnecessary resources
-    if (!isJavaFXInitialized) {
+    JavaFxInitializer.initializeJavaFx();
+    if (!isControllerInitialized) {
       final CountDownLatch latch = new CountDownLatch(1);
-      Platform.startup(() -> {
-        stage = new Stage();
-        mainController = new MainController(stage);
-        latch.countDown();
+      Platform.runLater(() -> {
+        try {
+          stage = new Stage();
+          mainController = new MainController(stage);
+        } finally {
+          latch.countDown();
+        }
       });
       latch.await();
-      isJavaFXInitialized = true;
+      isControllerInitialized = true;
     }
   }
 

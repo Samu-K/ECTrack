@@ -8,25 +8,24 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import junit.framework.TestCase;
 
+/**
+ * This class is used for testing LandingController.
+ */
 public class LandingControllerTest extends TestCase {
 
   private static boolean isJavaFXInitialized = false;
   private LandingController controller;
 
 
-
-
+  /**
+   * Sets up class for each test.
+   *
+   * @throws Exception if something goes wrong with JavaFX.
+   */
   protected void setUp() throws Exception {
     super.setUp();
 
-    if (!isJavaFXInitialized) {
-      CountDownLatch latch = new CountDownLatch(1);
-      Platform.startup(() -> {
-        latch.countDown();
-      });
-      latch.await();
-      isJavaFXInitialized = true;
-    }
+    JavaFxInitializer.initializeJavaFx();
 
     CountDownLatch setupLatch = new CountDownLatch(1);
     Platform.runLater(() -> {
@@ -42,6 +41,11 @@ public class LandingControllerTest extends TestCase {
     setupLatch.await();
   }
 
+  /**
+   * Tests the initialization of the controller for the landing page.
+   *
+   * @throws Exception if something goes wrong with JavaFX.
+   */
   public void testInitialize() throws Exception {
     CountDownLatch latch = new CountDownLatch(1);
     Platform.runLater(() -> {
