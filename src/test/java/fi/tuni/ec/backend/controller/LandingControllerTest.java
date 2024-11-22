@@ -81,7 +81,7 @@ public class LandingControllerTest extends TestCase {
    * Tests setDispDate in an indirect way, as it's not a public function.
    * Ensures that date can be changed to previous dates, but not into the future.
    */
-  public void testRangeOfDates() throws Exception {
+  public void testSetDate() throws Exception {
     CountDownLatch latch = new CountDownLatch(1);
     Platform.runLater(() -> {
       try {
@@ -92,18 +92,11 @@ public class LandingControllerTest extends TestCase {
         String pastDate = formatter.format(LocalDate.now().minusDays(1));
         assertEquals("Display date should be moved back one day.", pastDate, controllerPastDate);
 
-        /**
-         * Currently the popup created from moving to a future date breaks all the threads
-         * on JavaFX, so for now this is commented out as nothing works with it.
-         */
-//        String currentDate = formatter.format(LocalDate.now());
-//
-//        for (int i = 0; i <= 1; i += 1) {
-//          controller.setDateNext();
-//        }
-//        String controllerDate = controller.dateLabel.getText();
-//        assertEquals("Display date should not be set to a future date.", currentDate,
-//            controllerDate);
+        String currentDate = formatter.format(LocalDate.now());
+        controller.setDateNext();
+        String controllerDate = controller.dateLabel.getText();
+        assertEquals("Display date should have moved forward to current date.", currentDate,
+            controllerDate);
       } finally {
         latch.countDown();
       }

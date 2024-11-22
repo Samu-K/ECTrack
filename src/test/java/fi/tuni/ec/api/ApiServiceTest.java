@@ -1,4 +1,4 @@
-package fi.tuni.ec.backend.controller;
+package fi.tuni.ec.api;
 
 import fi.tuni.ec.api.ApiData;
 import fi.tuni.ec.api.ApiService;
