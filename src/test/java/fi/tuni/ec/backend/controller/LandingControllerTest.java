@@ -79,7 +79,6 @@ public class LandingControllerTest extends TestCase {
 
   /**
    * Tests setDispDate in an indirect way, as it's not a public function.
-   * Ensures that date can be changed to previous dates, but not into the future.
    */
   public void testSetDate() throws Exception {
     CountDownLatch latch = new CountDownLatch(1);
@@ -97,6 +96,60 @@ public class LandingControllerTest extends TestCase {
         String controllerDate = controller.dateLabel.getText();
         assertEquals("Display date should have moved forward to current date.", currentDate,
             controllerDate);
+      } finally {
+        latch.countDown();
+      }
+    });
+    latch.await();
+  }
+
+  /**
+   * Tests showMonth to have correct label and visible buttons.
+   */
+  public void testShowMonth() throws Exception {
+    CountDownLatch latch = new CountDownLatch(1);
+    Platform.runLater(() -> {
+      try {
+        controller.showMonth();
+        String monthText = controller.dateLabel.getText();
+        DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM");
+        String currentMonth = monthFormatter.format(LocalDate.now());
+
+        // Assert: Text label should not be null or empty
+        assertNotNull("Month label should not be null.", controller.dateLabel.getText());
+        assertFalse("Month label should not be empty.", controller.dateLabel.getText().isEmpty());
+        // Assert: Text label has the month as text
+        assertEquals("Month label should be correctly set.", currentMonth, monthText);
+        //Assert: Buttons should be visible
+        assertTrue("Next button should be visible.", controller.nextDateButton.isVisible());
+        assertTrue("Prev button should be visible.", controller.prevDateButton.isVisible());
+      } finally {
+        latch.countDown();
+      }
+    });
+    latch.await();
+  }
+
+  /**
+   * Tests showYear to have correct label and visible buttons.
+   */
+  public void testShowYear() throws Exception {
+    CountDownLatch latch = new CountDownLatch(1);
+    Platform.runLater(() -> {
+      try {
+        controller.showYear();
+        String yearText = controller.dateLabel.getText();
+        DateTimeFormatter yearFormatter = DateTimeFormatter.ofPattern("yyyy");
+        String currentYear = yearFormatter.format(LocalDate.now());
+
+        // Assert: Text label should not be null or empty
+        assertNotNull("Year label should not be null.", controller.dateLabel.getText());
+        assertFalse("Year label should not be empty.", controller.dateLabel.getText().isEmpty());
+        // Assert: Text label has the month as text
+        assertEquals("Year label should be correctly set.", currentYear, yearText);
+        //Assert: Buttons should be visible
+        assertTrue("Next button should be visible.", controller.nextDateButton.isVisible());
+        assertTrue("Prev button should be visible.", controller.prevDateButton.isVisible());
       } finally {
         latch.countDown();
       }
