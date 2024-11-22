@@ -120,7 +120,7 @@ public class LandingControllerTest extends TestCase {
         assertFalse("Month label should not be empty.", controller.dateLabel.getText().isEmpty());
         // Assert: Text label has the month as text
         assertEquals("Month label should be correctly set.", currentMonth, monthText);
-        //Assert: Buttons should be visible
+        // Assert: Buttons should be visible
         assertTrue("Next button should be visible.", controller.nextDateButton.isVisible());
         assertTrue("Prev button should be visible.", controller.prevDateButton.isVisible());
       } finally {
@@ -147,9 +147,37 @@ public class LandingControllerTest extends TestCase {
         assertFalse("Year label should not be empty.", controller.dateLabel.getText().isEmpty());
         // Assert: Text label has the month as text
         assertEquals("Year label should be correctly set.", currentYear, yearText);
-        //Assert: Buttons should be visible
+        // Assert: Buttons should be visible
         assertTrue("Next button should be visible.", controller.nextDateButton.isVisible());
         assertTrue("Prev button should be visible.", controller.prevDateButton.isVisible());
+      } finally {
+        latch.countDown();
+      }
+    });
+    latch.await();
+  }
+
+  /**
+   * Tests showYtd to have correct label and button visibility.
+   */
+  public void testShowYtd() throws Exception {
+    CountDownLatch latch = new CountDownLatch(1);
+    Platform.runLater(() -> {
+      try {
+        controller.showYtd();
+        String ytdText = controller.dateLabel.getText();
+        DateTimeFormatter ytdFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        String startOfYear = "01.01." + LocalDate.now().getYear();
+        String expectedYtdText = startOfYear + " - " + ytdFormatter.format(LocalDate.now());
+
+        // Assert: Text label should not be null or empty
+        assertNotNull("YTD label should not be null.", controller.dateLabel.getText());
+        assertFalse("YTD label should not be empty.", controller.dateLabel.getText().isEmpty());
+        // Assert: Text label has the correct year to date text
+        assertEquals("YTD label should be correctly set.", expectedYtdText, ytdText);
+        // Assert: Buttons should be hidden
+        assertFalse("Next button should be hidden.", controller.nextDateButton.isVisible());
+        assertFalse("Prev button should be hidden.", controller.prevDateButton.isVisible());
       } finally {
         latch.countDown();
       }
