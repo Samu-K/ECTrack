@@ -60,6 +60,7 @@ public class LandingController {
   private NumberAxis barY = new NumberAxis();
   private CategoryAxis barX = new CategoryAxis();
   private BarChart<String, Number> barChart = new BarChart<>(barX, barY);
+  private final ApiService ApiService = new ApiService();
 
   private final Alert invalidDateAlert = new Alert(
       Alert.AlertType.ERROR,
@@ -69,10 +70,6 @@ public class LandingController {
       Alert.AlertType.ERROR,
       "Query not found",
       ButtonType.OK);
-
-  private static final List<String> ALL_COUNTRIES = List.of(
-      "Finland", "Sweden", "Norway", "Denmark", "Iceland", "Estonia", "Latvia", "Lithuania"
-  );
 
   // describes what time period is currently selected
   private enum DateState {
@@ -98,17 +95,22 @@ public class LandingController {
     ds = DateState.DAY;
     queryHandler = new QueryHandler();
 
-    countryCb.getItems().addAll(ALL_COUNTRIES);
+    countryCb.getItems().addAll(fi.tuni.ec.api.ApiService.COUNTRY_CODES.keySet());
     countryCb.getSelectionModel().selectFirst();
 
-    // Take this from selected country after country selection implemented
-    var country = "Finland";
+    // Update graph when country is changed
+    countryCb.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+      if (newValue != null && !newValue.equals(oldValue)) {
+        clearCharts();
+        updateGraph();
+      }
+    });
 
     // Take these from selected dates
     var periodStart = dispDate.format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
     var periodEnd = dispDate.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
 
-    var priceData = fetchAndFormData(country, periodStart, periodEnd);
+    var priceData = fetchAndFormData(countryCb.getValue(), periodStart, periodEnd);
 
     if (priceData != null) {
       createGraph(priceData);
@@ -491,9 +493,9 @@ public class LandingController {
   // Copied from MainController for now
   private List<ApiData> fetchAndFormData(String country, String periodStart, String periodEnd) {
     try {
-      var apiService = new ApiService();
+      var fetchedData = ApiService.fetchData(country, periodStart, periodEnd);
 
-      var fetchedData = apiService.fetchData(country, periodStart, periodEnd);
+      if (fetchedData.isEmpty()) throw new IOException();
 
       // Ensure data fetched from api is really between the chosen period
       // since api has returned data couple hours off from requested
@@ -506,6 +508,7 @@ public class LandingController {
           .collect(Collectors.toList());
     } catch (IOException e) {
       System.out.println("Error fetching data: " + e.getMessage());
+      showErrorMessage("No data available for selected period or country");
       return null;
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -558,7 +561,6 @@ public class LandingController {
     // For year and ytd, split range into 3 month sequences
     if (ds == DateState.YEAR || ds == DateState.YTD) {
       List<String[]> periods = splitYearlyRange(periodStart, periodEnd);
-
       for (String[] period : periods) {
         periodStart = period[0];
         periodEnd = period[1];
@@ -578,12 +580,13 @@ public class LandingController {
         case MONTH -> updateMonthGraph(priceData);
         case YEAR, YTD -> updateYearGraph(priceData);
         default -> {
-          throw new IllegalStateException("Unexpected value: " + ds);
+          showErrorMessage("Invalid date state");
         }
       }
     } else {
       new Alert(
           Alert.AlertType.ERROR, "Error fetching data", ButtonType.OK);
+      showErrorMessage("No data available for selected period or country");
     }
   }
 
@@ -761,6 +764,19 @@ public class LandingController {
       priceSeries.getData().add(new XYChart.Data<>(dataString, data.price));
       usageSeries.getData().add(new XYChart.Data<>(dataString, data.usage));
     }
+  }
+  private void showErrorMessage(String message) {
+    graphPlaceholder.getChildren().clear();
+    graphPlaceholder2.getChildren().clear();
+
+    Label errorLabel1 = new Label(message);
+    Label errorLabel2 = new Label(message);
+
+    errorLabel1.setStyle("-fx-text-fill: black; -fx-font-size: 24px;");
+    errorLabel2.setStyle("-fx-text-fill: black; -fx-font-size: 24px;");
+
+    graphPlaceholder.getChildren().add(errorLabel1);
+    graphPlaceholder2.getChildren().add(errorLabel2);
   }
 }
 
