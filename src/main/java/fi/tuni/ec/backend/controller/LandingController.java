@@ -60,7 +60,7 @@ public class LandingController {
   private NumberAxis barY = new NumberAxis();
   private CategoryAxis barX = new CategoryAxis();
   private BarChart<String, Number> barChart = new BarChart<>(barX, barY);
-  private final ApiService ApiService = new ApiService();
+  private final ApiService apiService = new ApiService();
 
   private final Alert invalidDateAlert = new Alert(
       Alert.AlertType.ERROR,
@@ -99,12 +99,14 @@ public class LandingController {
     countryCb.getSelectionModel().selectFirst();
 
     // Update graph when country is changed
-    countryCb.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-      if (newValue != null && !newValue.equals(oldValue)) {
-        clearCharts();
-        updateGraph();
+    countryCb.getSelectionModel().selectedItemProperty().addListener(
+        (observable, oldValue, newValue) -> {
+          if (newValue != null && !newValue.equals(oldValue)) {
+          clearCharts();
+          updateGraph();
+        }
       }
-    });
+    );
 
     // Take these from selected dates
     var periodStart = dispDate.format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
@@ -493,9 +495,11 @@ public class LandingController {
   // Copied from MainController for now
   private List<ApiData> fetchAndFormData(String country, String periodStart, String periodEnd) {
     try {
-      var fetchedData = ApiService.fetchData(country, periodStart, periodEnd);
+      var fetchedData = apiService.fetchData(country, periodStart, periodEnd);
 
-      if (fetchedData.isEmpty()) throw new IOException();
+      if (fetchedData.isEmpty()) {
+        throw new IOException();
+      }
 
       // Ensure data fetched from api is really between the chosen period
       // since api has returned data couple hours off from requested
@@ -765,6 +769,7 @@ public class LandingController {
       usageSeries.getData().add(new XYChart.Data<>(dataString, data.usage));
     }
   }
+
   private void showErrorMessage(String message) {
     graphPlaceholder.getChildren().clear();
     graphPlaceholder2.getChildren().clear();
