@@ -2,6 +2,9 @@ package fi.tuni.ec.api;
 
 import fi.tuni.ec.api.ApiData;
 import fi.tuni.ec.api.ApiService;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 import junit.framework.TestCase;
 
@@ -56,9 +59,55 @@ public class ApiServiceTest extends TestCase {
       // Assert: Confirms pricing data is not null or empty
       assertNotNull("Data shouldn't be null", pricingData);
       assertFalse("Data shouldn't be empty", pricingData.isEmpty());
+
+      // Assert: Throws an exception with invalid time periods
+      String invalidPeriod = "INVALID_PERIOD";
+      try {
+        apiService.fetchData(country, invalidPeriod, invalidPeriod);
+        fail("IOException was not thrown");
+      } catch (Exception e) {
+        assertEquals("Expected exception was not thrown", e.getClass(),
+            IOException.class);
+      }
     } catch (Exception e) {
       e.printStackTrace();
       fail("fetchData threw an exception: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Tests the fetchMultiZoneData method.
+   */
+  public void testFetchMultiZoneData() throws Exception {
+    String country = "Sweden";
+    String periodStart = "202410010000";
+    String periodEnd = "202410012300";
+
+    // Accessing the method via reflection as it's private
+    Method method = ApiService.class.getDeclaredMethod("fetchMultiZoneData", String.class,
+        String.class, String.class);
+    method.setAccessible(true);
+    List<ApiData> result = (List<ApiData>) method.invoke(apiService, country, periodStart,
+        periodEnd);
+
+    // Assert: the results are not null or empty
+    assertNotNull("Data should not be null", result);
+    assertFalse("Data should not be empty", result.isEmpty());
+
+    // Assert: There should be at least 24 data points when fetching data for the period with 60 min
+    // intervals
+    int size = result.size();
+    assertTrue("There should be more data points for this period", size >= 24);
+
+    // Assert: Throws an exception with invalid time periods
+    String invalidPeriod = "INVALID_PERIOD";
+    try {
+      method.invoke(apiService, country, invalidPeriod, invalidPeriod);
+      fail("IOException was not thrown");
+    } catch (InvocationTargetException e) {
+      Throwable cause = e.getCause();
+      assertEquals("Expected exception was not thrown", cause.getClass(),
+          IOException.class);
     }
   }
 }
