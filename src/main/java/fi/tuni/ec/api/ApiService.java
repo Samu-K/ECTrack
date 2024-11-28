@@ -1,8 +1,5 @@
 package fi.tuni.ec.api;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -16,11 +13,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import javafx.util.Pair;
+
 import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import javafx.util.Pair;
 
 
 /**
@@ -34,11 +38,20 @@ public class ApiService {
       "yyyy-MM-dd'T'HH:mm'Z'");
 
   // Map for storing area (country) codes
+  // Countries with multiple zones store the prefix
   public static final Map<String, String> COUNTRY_CODES = Map.of(
       "Finland", "10YFI-1--------U",
-      "Germany", "10YDE-1--------W",
+      "Germany", "10Y1001A1001A82H",
       "France", "10YFR-RTE------C",
-      "Sweden", "10YSE-1--------K"
+      "Sweden", "SWE"
+  );
+
+  // Map of countries with multiple zones
+  public static final Map<String, String> MULTI_ZONE_COUNTRIES = Map.of(
+      "SWE_1", "10Y1001A1001A44P",
+      "SWE_2", "10Y1001A1001A45N",
+      "SWE_3", "10Y1001A1001A46L",
+      "SWE_4", "10Y1001A1001A47J"
   );
 
   // Map for storing lattitude and longitude (Capital city)
@@ -78,12 +91,38 @@ public class ApiService {
   /**
    * Get the response stream from the API.
    *
-   * @param query The query string
+   * @param areaDomain The area domain
+   *                   (e.g. 10YFI-1--------U for Finland)
+   * @param docType The document type
+   *                (e.g. A44 for price data)
+   *                (e.g. A65 for usage data)
+   * @param periodStart The start date of the period
+   * @param periodEnd The end date of the period
+   *                 (format: yyyyMMddHHmm)
    *
    * @return InputStream
    * @throws Exception if an error occurs
    */
-  private InputStream getResponseStream(String query) throws Exception {
+  private InputStream getResponseStream(
+      String areaDomain,
+      String docType,
+      String periodStart,
+      String periodEnd) throws Exception {
+
+    String query = String.format(
+        "?securityToken=%s&documentType=%s&processType=A16",
+        getApiKey(), docType);
+
+    // Domain param
+    if (docType.equals("A65")) {
+      query = String.format("%s&outBiddingZone_Domain=%s", query, areaDomain);
+    } else {
+      query = String.format(
+          "%s&%s=%s&%s=%s", query, "in_Domain", areaDomain, "out_Domain", areaDomain
+      );
+    }
+    query = String.format("%s&periodStart=%s&periodEnd=%s", query, periodStart, periodEnd);
+
     URI uri = new URI(API_URL + query);
     URL url = uri.toURL();
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -109,22 +148,12 @@ public class ApiService {
    */
   public List<ApiData> fetchData(String country, String periodStart, String periodEnd)
       throws Exception {
-    List<ApiData> dataList = new ArrayList<>();
+
 
     String areaDomain = COUNTRY_CODES.get(country);
 
-    String priceQuery = String.format(
-        "?securityToken=%s&documentType=A44"
-            + "&processType=A16&in_Domain=%s&out_Domain=%s&periodStart=%s&periodEnd=%s",
-        getApiKey(), areaDomain, areaDomain, periodStart, periodEnd);
-
-    String usageQuery = String.format(
-        "?securityToken=%s&documentType=A65"
-            + "&processType=A16&outBiddingZone_Domain=%s&periodStart=%s&periodEnd=%s",
-        getApiKey(), areaDomain, periodStart, periodEnd);
-
-    InputStream priceStream = getResponseStream(priceQuery);
-    InputStream usageStream = getResponseStream(usageQuery);
+    InputStream priceStream = getResponseStream(areaDomain, "A44", periodStart, periodEnd);
+    InputStream usageStream = getResponseStream(areaDomain, "A65", periodStart, periodEnd);
 
     Pair<Double, Double> coordinates = COUNTRY_COORDINATES.get(country);
     Map<String, Double> temperatureData = fetchTemperatureData(
@@ -137,8 +166,25 @@ public class ApiService {
     priceStream.close();
     usageStream.close();
 
+    return combineApiData(priceData, usageData);
+  }
+
+  /**
+   * Combine price and usage data into a single list.
+   *
+   * @param priceData List of price data
+   * @param usageData List of usage data
+   *
+   * @return List of ApiData
+   */
+  private static List<ApiData> combineApiData(
+      List<ApiData> priceData,
+      List<ApiData> usageData) {
     // Combine the two lists
-    for (int i = 0; i < priceData.size(); i++) {
+    int len = Math.min(priceData.size(), usageData.size());
+
+    List<ApiData> dataList = new ArrayList<>();
+    for (int i = 0; i < len; i++) {
       ApiData data = new ApiData();
       data.price = priceData.get(i).price;
       data.usage = usageData.get(i).usage;
@@ -149,6 +195,53 @@ public class ApiService {
     }
 
     return dataList;
+  }
+
+  /**
+   * Fetch data for countries with multiple zones.
+   *
+   * @param country The country code
+   * @param periodStart The start date of the period
+   * @param periodEnd The end date of the period
+   *
+   * @return List of ApiData
+   * @throws Exception if an error occurs
+   */
+  private List<ApiData> fetchMultiZoneData(
+      String country,
+      String periodStart,
+      String periodEnd) throws Exception {
+
+    // List to store combined data
+    List<ApiData> combinedPriceData = new ArrayList<>();
+    List<ApiData> combinedUsageData = new ArrayList<>();
+
+    int i = 1;
+    // get prefix for the country
+    String areaPrefix = COUNTRY_CODES.get(country);
+
+    String zone = areaPrefix + "_" + i;
+    // run until zone is not found
+    while (MULTI_ZONE_COUNTRIES.containsKey(zone)) {
+      String areaDomain = MULTI_ZONE_COUNTRIES.get(zone);
+
+      InputStream priceStream = getResponseStream(areaDomain, "A44", periodStart, periodEnd);
+      InputStream usageStream = getResponseStream(areaDomain, "A65", periodStart, periodEnd);
+
+      List<ApiData> priceData = parseResponse(priceStream, "price", null);
+      combinedPriceData.addAll(priceData);
+
+      List<ApiData> usageData = parseResponse(usageStream, "usage", null);
+      combinedUsageData.addAll(usageData);
+
+      priceStream.close();
+      usageStream.close();
+
+      i++;
+      zone = areaPrefix + "_" + i;
+    }
+
+    return combineApiData(combinedPriceData, combinedUsageData);
   }
 
   /**
