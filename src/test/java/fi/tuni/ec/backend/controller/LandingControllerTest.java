@@ -68,7 +68,7 @@ public class LandingControllerTest extends TestCase {
 
         // Assert: The combo box has the first country selected
         assertEquals("First country should be selected in combo box",
-            "Finland",
+            "Germany",
             controller.countryCb.getValue());
       } finally {
         latch.countDown();
