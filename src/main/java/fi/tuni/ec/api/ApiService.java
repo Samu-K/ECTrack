@@ -1,21 +1,27 @@
 package fi.tuni.ec.api;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import javafx.util.Pair;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-
 
 /**
  * Service for fetching data from the API.
@@ -44,6 +50,22 @@ public class ApiService {
       "SWE_4", "10Y1001A1001A47J"
   );
 
+  // Map for storing lattitude and longitude (Capital city)
+  public static final Map<String, Pair<Double, Double>> COUNTRY_COORDINATES = Map.of(
+      "Finland", new Pair<>(60.17, 24.94), // ~Helsinki
+      "Germany", new Pair<>(52.52, 13.40), // ~Berlin
+      "France", new Pair<>(48.86, 2.35), // ~Paris
+      "Sweden", new Pair<>(59.33, 18.07) // ~Stockholm
+  );
+
+  public static final Map<String, String> COUNTRY_TIMEZONES = Map.of(
+      "Finland", "Europe/Helsinki",
+      "Germany", "Europe/Berlin",
+      "France", "Europe/Paris",
+      "Sweden", "Europe/Stockholm"
+  );
+
+  // Static block to load the API key from config.properties
   // Static block to load the API key from config.properties
   static {
     try (InputStream input = ApiService.class.getResourceAsStream("config.properties")) {
@@ -124,23 +146,29 @@ public class ApiService {
   public List<ApiData> fetchData(String country, String periodStart, String periodEnd)
       throws Exception {
 
-
+    // Get area domain and timezone info
     String areaDomain = COUNTRY_CODES.get(country);
+    Pair<Double, Double> coordinates = COUNTRY_COORDINATES.get(country);
+    String timezone = COUNTRY_TIMEZONES.get(country);
 
-    // check if country has multiple zones
-    // areaDomain + "_1" is used to check if the country has multiple zones
-    if (MULTI_ZONE_COUNTRIES.containsKey(areaDomain + "_1")) {
-      return fetchMultiZoneData(country, periodStart, periodEnd);
-    }
-
+    // Fetch price and usage data streams
     InputStream priceStream = getResponseStream(areaDomain, "A44", periodStart, periodEnd);
     InputStream usageStream = getResponseStream(areaDomain, "A65", periodStart, periodEnd);
-    List<ApiData> priceData = parseResponse(priceStream, "price");
-    List<ApiData> usageData = parseResponse(usageStream, "usage");
+
+    // Fetch temperature data
+    Map<String, Double> temperatureData = fetchTemperatureData(
+        coordinates.getKey(), coordinates.getValue(), periodStart, periodEnd, timezone);
+
+    // Parse the responses into ApiData
+    List<ApiData> priceData = parseResponse(priceStream, "price", temperatureData);
+    List<ApiData> usageData = parseResponse(usageStream, "usage", null);
+
+    // Close streams
     priceStream.close();
     usageStream.close();
 
     return combineApiData(priceData, usageData);
+
   }
 
   /**
@@ -164,6 +192,7 @@ public class ApiService {
       data.usage = usageData.get(i).usage;
       data.date = priceData.get(i).date;
       data.interval = priceData.get(i).interval;
+      data.temperatureMean = priceData.get(i).temperatureMean;
       dataList.add(data);
     }
 
@@ -201,10 +230,10 @@ public class ApiService {
       InputStream priceStream = getResponseStream(areaDomain, "A44", periodStart, periodEnd);
       InputStream usageStream = getResponseStream(areaDomain, "A65", periodStart, periodEnd);
 
-      List<ApiData> priceData = parseResponse(priceStream, "price");
+      List<ApiData> priceData = parseResponse(priceStream, "price", null);
       combinedPriceData.addAll(priceData);
 
-      List<ApiData> usageData = parseResponse(usageStream, "usage");
+      List<ApiData> usageData = parseResponse(usageStream, "usage", null);
       combinedUsageData.addAll(usageData);
 
       priceStream.close();
@@ -218,9 +247,153 @@ public class ApiService {
   }
 
   /**
-   * Parse response into a list of ApiData.
+   * Fetch temperature data for a given location and period.
+   *
+   * @param latitude The latitude of the location
+   * @param longitude The longitude of the location
+   * @param periodStart The start date of the period (format: yyyyMMddHHmm)
+   * @param periodEnd The end date of the period (format: yyyyMMddHHmm)
+   * @param timezone The timezone of the location
+   * @return A map of dates to mean temperatures
+   * @throws Exception if an error occurs while fetching the data
    */
-  private List<ApiData> parseResponse(InputStream responseStream, String type) throws Exception {
+  public Map<String, Double> fetchTemperatureData(
+      double latitude,
+      double longitude,
+      String periodStart,
+      String periodEnd,
+      String timezone) throws Exception {
+
+    // Formatters for date conversion
+    DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+    DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    // Format input dates
+    periodStart = LocalDateTime.parse(periodStart, inputFormatter).format(outputFormatter);
+    periodEnd = LocalDateTime.parse(periodEnd, inputFormatter).format(outputFormatter);
+    String today = LocalDateTime.now().format(outputFormatter);
+
+    // Adjust periodStart and periodEnd if it's today
+    boolean isStartToday = periodStart.equals(today);
+    boolean isEndToday = periodEnd.equals(today);
+
+    if (isEndToday) {
+      periodEnd = LocalDateTime.now().minusDays(1).format(outputFormatter);
+    }
+
+    if (isStartToday) {
+      periodStart = LocalDateTime.now().minusDays(1).format(outputFormatter);
+    }
+
+    // Fetch historical data
+    Map<String, Double> temperatureMap = fetchHistoricalData(
+        latitude, longitude, periodStart, periodEnd, timezone
+    );
+
+    // Fetch forecast data if necessary
+    if (isStartToday || isEndToday) {
+      Map<String, Double> forecastData = fetchForecastData(latitude, longitude, timezone);
+      temperatureMap.putAll(forecastData);
+    }
+
+    return temperatureMap;
+  }
+
+  private Map<String, Double> fetchHistoricalData(
+      double latitude,
+      double longitude,
+      String periodStart,
+      String periodEnd,
+      String timezone
+  ) throws Exception {
+    String urlTemplate = "https://archive-api.open-meteo.com/v1/archive?latitude=%s&longitude=%s"
+          + "&start_date=%s&end_date=%s&timezone=%s"
+          + "&daily=temperature_2m_min&daily=temperature_2m_max";
+    String url = String.format(urlTemplate, latitude, longitude, periodStart, periodEnd, timezone);
+
+    JsonObject response = sendGetRequest(url);
+    JsonObject dailyData = response.getAsJsonObject("daily");
+
+    return extractTemperatureData(dailyData);
+  }
+
+  private Map<String, Double> fetchForecastData(
+        double latitude,
+        double longitude,
+        String timezone
+  ) throws Exception {
+    String urlTemplate = "https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s"
+            + "&daily=temperature_2m_min&daily=temperature_2m_max&timezone=%s&forecast_days=1";
+    String url = String.format(urlTemplate, latitude, longitude, timezone);
+
+    JsonObject response = sendGetRequest(url);
+    JsonObject dailyData = response.getAsJsonObject("daily");
+
+    return extractTemperatureData(dailyData);
+  }
+
+  private JsonObject sendGetRequest(String urlString) throws Exception {
+    URI uri = new URI(urlString);
+    URL url = uri.toURL();
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    connection.setRequestMethod("GET");
+
+    int responseCode = connection.getResponseCode();
+    if (responseCode != 200) {
+      throw new IOException("Failed to fetch data from URL: " + urlString
+          + "| HTTP status:" + responseCode);
+    }
+
+    InputStreamReader reader = new InputStreamReader(connection.getInputStream());
+    JsonElement responseJson = JsonParser.parseReader(reader);
+    reader.close();
+
+    if (!responseJson.isJsonObject()) {
+      throw new IOException("Unexpected JSON format: " + responseJson);
+    }
+
+    return responseJson.getAsJsonObject();
+  }
+  /**
+   * Extract temperature data from the JSON object.
+   *
+   * @param dailyData The JSON object containing the daily data
+   * @return A map of dates to mean temperatures
+   */
+
+  private Map<String, Double> extractTemperatureData(JsonObject dailyData) {
+    Map<String, Double> temperatureMap = new LinkedHashMap<>();
+
+    JsonArray dates = dailyData.getAsJsonArray("time");
+    JsonArray minTemps = dailyData.getAsJsonArray("temperature_2m_min");
+    JsonArray maxTemps = dailyData.getAsJsonArray("temperature_2m_max");
+
+    for (int i = 0; i < dates.size(); i++) {
+      String date = dates.get(i).getAsString();
+      double minTemp = minTemps.get(i).getAsDouble();
+      double maxTemp = maxTemps.get(i).getAsDouble();
+      double meanTemp = (minTemp + maxTemp) / 2;
+
+      temperatureMap.put(date, meanTemp);
+    }
+
+    return temperatureMap;
+  }
+
+
+
+  /**
+   * Parse response into a list of ApiData, integrating temperature data.
+   *
+   * @param responseStream The response stream from API
+   * @param type The type of data to parse (price or usage)
+   * @param temperatureData Map of the temperature data keyed by date (nullable if not needed)
+   * @return List of ApiData
+   * @throws Exception if an error occurs
+   */
+  private List<ApiData> parseResponse(InputStream responseStream, String type,
+      Map<String, Double> temperatureData) throws Exception {
+
     String dataString = switch (type) {
       case "price" -> "price.amount";
       case "usage" -> "quantity";
@@ -269,51 +442,17 @@ public class ApiService {
         data.date = date;
         data.interval = interval;
 
+        String dateKey = date.toLocalDate().toString();
+
+        // Add temperature data if available
+        if (temperatureData != null && temperatureData.containsKey(dateKey)) {
+          data.temperatureMean = temperatureData.get(dateKey);
+        }
+
         dataList.add(data);
       }
     }
     return dataList;
 
   }
-
-  // /**
-  //  * Fetch data for a specific day.
-  //  */
-  // public void fetchDataForDay(String country, LocalDate date) throws Exception {
-  //   String periodStart = date.format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
-  //   String periodEnd = date.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
-  //   List<Double> pricingData = fetchPricing(country, periodStart, periodEnd);
-  //   List<Double> usageData = fetchUsage(country, periodStart, periodEnd);
-  //   System.out.println("Pricing length: " + pricingData.size());
-  //   System.out.println("Usage length: " + usageData.size());
-  //   System.out.println("Pricing data: " + pricingData);
-  //   System.out.println("Usage data: " + usageData);
-  // }
-
-  // /**
-  //  * Fetch data for a specific week.
-  //  */
-  // public void fetchDataForWeek(String country, LocalDate startDate) throws Exception {
-  //   LocalDate endOfWeek = startDate.plusDays(6); // Assuming week starts on Monday
-  //   String periodStart = startDate.format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
-  //   String periodEnd = endOfWeek.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
-  //   List<Double> pricingData = fetchPricing(country, periodStart, periodEnd);
-  //   List<Double> usageData = fetchUsage(country, periodStart, periodEnd);
-  //   System.out.println("Weekly Pricing data: " + pricingData);
-  //   System.out.println("Weekly Usage data: " + usageData);
-  // }
-
-  // /**
-  //  * Fetch data for specific month.
-  //  */
-  // public void fetchDataForMonth(String country, YearMonth month) throws Exception {
-  //   LocalDate firstDay = month.atDay(1);
-  //   LocalDate lastDay = month.atEndOfMonth();
-  //   String periodStart = firstDay.format(DateTimeFormatter.ofPattern("yyyyMMdd0000"));
-  //   String periodEnd = lastDay.format(DateTimeFormatter.ofPattern("yyyyMMdd2300"));
-  //   List<Double> pricingData = fetchPricing(country, periodStart, periodEnd);
-  //   List<Double> usageData = fetchUsage(country, periodStart, periodEnd);
-  //   System.out.println("Monthly Pricing data: " + pricingData);
-  //   System.out.println("Monthly Usage data: " + usageData);
-  // }
 }

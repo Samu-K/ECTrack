@@ -57,43 +57,6 @@ public class MainController {
     }
   }
 
-
-  // /**
-  //  * Handle the daily view (fetch data for a specific day).
-  //  */
-  // public void handleDailyView(LocalDate date, String country) {
-  //   try {
-  //     apiService.fetchDataForDay(country, date);
-  //   } catch (Exception e) {
-  //     System.out.println("Error fetching data for day: " + e.getMessage());
-  //   }
-  // }
-
-  // /**
-  //  * Handle the weekly view (fetch data for a specific week).
-  //  */
-  // public void handleWeeklyView(LocalDate startDate, String country) {
-  //   try {
-  //     apiService.fetchDataForWeek(country, startDate);
-  //   } catch (Exception e) {
-  //     System.out.println("Error fetching weekly data: " + e.getMessage());
-  //   }
-  // }
-
-  // /**
-  //  * Handle the monthly view (fetch data for a specific month).
-  //  */
-  // public void handleMonthlyView(YearMonth month, String country) {
-  //   try {
-  //     apiService.fetchDataForMonth(country, month);
-  //   } catch (Exception e) {
-  //     System.out.println("Error fetching monthly data: " + e.getMessage());
-  //   }
-  // }
-
-
-
-
   /**
    * Show the main page.
    */

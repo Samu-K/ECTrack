@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 public class ApiData {
   public double price;
   public double usage;
+  public Double temperatureMean;
   public LocalDateTime date;
   public Integer interval;
 }
