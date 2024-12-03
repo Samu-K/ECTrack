@@ -21,9 +21,33 @@
 }
 
 .chart-line-symbol {
-    -fx-background-color: null;
     -fx-background-insets: 0;
     -fx-padding: 0;
+    -fx-shape: "M 0 0";
+}
+
+.chart-legend-item-symbol.series0 {
+    -fx-background-insets: 0, 1;
+    -fx-padding: 5px;
+    -fx-background-color: #0000ff, #0000ff;
+    -fx-shape: "M 0 0 L 10 0 L 10 10 L 0 10 Z";
+    -fx-background-radius: 0;
+}
+
+.chart-series-line.series0 {
+    -fx-stroke: #0000ff;
+}
+
+.chart-legend-item-symbol.series1 {
+    -fx-background-insets: 0, 1;
+    -fx-padding: 5px;
+    -fx-background-color: #ff0000, #ff0000;
+    -fx-shape: "M 0 0 L 10 0 L 10 10 L 0 10 Z";
+    -fx-background-radius: 0;
+}
+
+.chart-series-line.series1 {
+    -fx-stroke: #ff0000;
 }
 
 

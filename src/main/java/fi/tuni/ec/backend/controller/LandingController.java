@@ -330,8 +330,9 @@ public class LandingController {
     lineChart = new LineChart<>(lineX, lineY);
     barChart = new BarChart<>(barX, barY);
 
-    lineY.setLabel("€ / Kw");
-    lineChart.setTitle("Electricity Prices");
+    lineY.setLabel("€ / Kw & °C");
+    lineChart.setTitle("Electricity Prices and Average Temperature");
+
     barY.setLabel("kWh");
     barChart.setTitle("Electricity Usage");
     barChart.setCategoryGap(3);
@@ -342,12 +343,20 @@ public class LandingController {
         Objects.requireNonNull(getClass().getResource("landing.css")).toExternalForm());
 
     XYChart.Series<String, Number> priceSeries = new XYChart.Series<>();
-    XYChart.Series<String, Number> usageSeries = new XYChart.Series<>();
     priceSeries.setName("Electricity Prices");
+
+    XYChart.Series<String, Number> tempSeries = new XYChart.Series<>();
+    tempSeries.setName("Temperature Mean");
+
+    XYChart.Series<String, Number> usageSeries = new XYChart.Series<>();
     usageSeries.setName("Electricity Usage");
 
     lineChart.getData().add(priceSeries);
+    lineChart.getData().add(tempSeries);
     barChart.getData().add(usageSeries);
+
+    lineChart.setLegendVisible(true);
+    barChart.setLegendVisible(false);
 
     graphPlaceholder.getChildren().add(lineChart);
     graphPlaceholder2.getChildren().add(barChart);
@@ -379,7 +388,7 @@ public class LandingController {
     try {
       assert week != null;
       return week.getFirst().format(dateFormatter) + " - "
-          + week.getFirst().format(dateFormatter);
+          + week.getLast().format(dateFormatter);
     } catch (NullPointerException e) {
       System.out.println("Error: Date null");
       return null;
@@ -631,7 +640,8 @@ public class LandingController {
   private void updateDayGraph(List<ApiData> priceData) {
     updateGraphData(
         priceData,
-        lineChart.getData().getFirst(),
+        lineChart.getData().get(0),
+        lineChart.getData().get(1),
         barChart.getData().getFirst(),
         "hour");
   }
@@ -655,11 +665,16 @@ public class LandingController {
                 .mapToDouble(data -> data.price)
                 .average()
                 .orElse(0.0);
+            temp.temperatureMean = dailyData.stream()
+                .mapToDouble(data -> data.temperatureMean)
+                .average()
+                .orElse(0.0);
             temp.usage = dailyData.stream()
                 .mapToDouble(data -> data.usage)
                 .sum();
           } else {
             temp.price = 0.0;
+            temp.temperatureMean = 0.0;
             temp.usage = 0.0;
           }
 
@@ -670,7 +685,8 @@ public class LandingController {
 
     updateGraphData(
         dailyAverages,
-        lineChart.getData().getFirst(),
+        lineChart.getData().get(0),
+        lineChart.getData().get(1),
         barChart.getData().getFirst(),
         "day");
 
@@ -700,7 +716,8 @@ public class LandingController {
 
     updateGraphData(
         dailyAverages,
-        lineChart.getData().getFirst(),
+        lineChart.getData().get(0),
+        lineChart.getData().get(1),
         barChart.getData().getFirst(),
         "dayOfMonth");
   }
@@ -708,9 +725,11 @@ public class LandingController {
   private void setNullToZero(List<ApiData> dailyData, ApiData temp) {
     if (!dailyData.isEmpty()) {
       temp.price = dailyData.stream().mapToDouble(data -> data.price).average().orElse(0);
+      temp.temperatureMean = dailyData.stream().mapToDouble(data -> data.temperatureMean).average().orElse(0);
       temp.usage = dailyData.stream().mapToDouble(data -> data.usage).sum();
     } else {
-      temp.price = 0;
+      temp.price = 0.0;
+      temp.temperatureMean = 0.0;
       temp.usage = 0;
     }
   }
@@ -738,7 +757,8 @@ public class LandingController {
 
     updateGraphData(
         monthlyAverages,
-        lineChart.getData().getFirst(),
+        lineChart.getData().get(0),
+        lineChart.getData().get(1),
         barChart.getData().getFirst(),
         "month");
 
@@ -746,28 +766,38 @@ public class LandingController {
 
   private void updateGraphData(List<ApiData> priceData,
                                XYChart.Series<String, Number> priceSeries,
+                               XYChart.Series<String, Number> tempSeries,
                                XYChart.Series<String, Number> usageSeries,
                                String periodType) {
 
     priceSeries.getData().clear();
+    tempSeries.getData().clear();
     usageSeries.getData().clear();
 
     for (var data : priceData) {
+      if (data.date.getMinute() != 0) {
+        continue; // Only get hourly data to be consistent with indexes
+      }
       String dataString;
       switch (periodType) {
-        case "hour" -> dataString = data.date.getHour() + ":00";
+        case "hour" -> dataString = data.date.getHour() + ":00" + getTemperatureString(data.temperatureMean);
         case "day" -> dataString = data.date.getDayOfWeek().getDisplayName(
             TextStyle.SHORT, Locale.ENGLISH
-        );
-        case "dayOfMonth" -> dataString = String.valueOf(data.date.getDayOfMonth());
+        ) + getTemperatureString(data.temperatureMean);
+        case "dayOfMonth" -> dataString = String.valueOf(data.date.getDayOfMonth()) + getTemperatureString(data.temperatureMean);
         case "month" -> dataString = data.date.getMonth().getDisplayName(
             TextStyle.SHORT, Locale.ENGLISH
-        );
+        ) + getTemperatureString(data.temperatureMean);
         default -> throw new IllegalArgumentException("Period type unexpected: " + periodType);
       }
       priceSeries.getData().add(new XYChart.Data<>(dataString, data.price));
+      tempSeries.getData().add(new XYChart.Data<>(dataString, data.temperatureMean));
       usageSeries.getData().add(new XYChart.Data<>(dataString, data.usage));
     }
+  }
+
+  private String getTemperatureString(Double temperature) {
+    return "\n" + String.format("%.1f", temperature) + "°C";
   }
 
   private void showErrorMessage(String message) {
